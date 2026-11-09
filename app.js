@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794245417";
+const APP_V="1794245608";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -172,35 +172,31 @@ function vAllen(){
     </div></section>
   ${presSection()}
   ${next.length?`<section><h2>Prossimi</h2><div class="mlist">${next.map(allRow).join("")}</div></section>`:""}
-  <section><h2>Svolti · ${past.length}</h2><div class="mlist">${past.length?months(past):'<div class="card empty">Gli allenamenti svolti compariranno qui: toccali per segnare presenze e RPE.</div>'}</div></section>`;
+  <section><h2>Svolti</h2><div class="mlist">${past.length?months(past):'<div class="card empty">Gli allenamenti svolti compariranno qui: toccali per segnare presenze e RPE.</div>'}</div></section>`;
 }
 let presOpen=false;
-const PCTC=v=>v==null?"var(--muted)":`hsl(${Math.round(Math.max(0,Math.min(1,(v-.5)/.5))*125)} 68% 44%)`;
+const PCTC=v=>v==null?"var(--muted)":`hsl(${Math.round(Math.max(0,Math.min(1,(v-.7)/.3))*125)} 68% 44%)`; /* 100% verde, 85% giallo, 70% o meno rosso */
 function presSection(){
   const rows=S.players.map(p=>{const a=playerAtt(p.id);return {p,tot:a.tot,pres:a.pres,ass:a.tot-a.pres,pct:a.tot?a.pres/a.tot:null}})
     .sort((x,y)=>(y.pct??-1)-(x.pct??-1)||x.ass-y.ass||x.p.name.localeCompare(y.p.name));
   if(!rows.length)return "";
-  const row=r=>`<div class="pr-row" style="--c:${PCTC(r.pct)}">
-      <span class="pr-nm">${nameHTML(r.p.name)}</span>
-      <span class="pr-bar"><i style="width:${r.pct==null?0:Math.round(r.pct*100)}%"></i></span>
-      <span class="pr-pct">${r.pct==null?"–":Math.round(r.pct*100)+"%"}</span>
-      <span class="pr-ass ${r.ass?"":"zero"}">${r.ass} ${r.ass===1?"assenza":"assenze"}</span></div>`;
+  const ini=n=>{const w=n.trim().split(/\s+/);return (w[0][0]+(w[1]?w[1][0]:"")).toUpperCase()};
+  const row=(r,i)=>`<div class="pr-row" style="--c:${PCTC(r.pct)};--rc:${RCOL[r.p.role]}">
+      <span class="pr-av">${esc(ini(r.p.name))}${i<3?`<i class="pr-rk r${i}">${i+1}</i>`:""}</span>
+      <span class="pr-mid"><span class="pr-nm">${nameHTML(r.p.name)}</span><span class="pr-bar"><i style="width:${r.pct==null?0:Math.round(r.pct*100)}%"></i></span></span>
+      <span class="pr-r"><b class="pr-pct">${r.pct==null?"–":Math.round(r.pct*100)+"%"}</b><span class="pr-ass ${r.ass?"":"zero"}">${r.ass?`${r.ass} ${r.ass===1?"assenza":"assenze"}`:"mai assente"}</span></span></div>`;
   const top=rows.slice(0,3),rest=rows.slice(3);
-  const tot=rows[0].tot;
   return `<section><h2>Presenze giocatori</h2>
     <div class="card prs ${presOpen?"open":""}">
-      <div class="pr-list">${top.map(row).join("")}</div>
-      ${rest.length?`<div class="pr-more" id="prMore" ${presOpen?"":"hidden"}><div class="pr-list">${rest.map(row).join("")}</div></div>
-      <button class="pr-tog" id="prTog" aria-expanded="${presOpen}"><span>${presOpen?"Mostra meno":`Mostra tutti (${rows.length})`}</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>`:""}
+      <div class="pr-list">${top.map((r,i)=>row(r,i)).join("")}</div>
+      ${rest.length?`<div class="pr-more"><div class="pr-in"><div class="pr-list">${rest.map((r,i)=>row(r,i+3)).join("")}</div></div></div>
+      <button class="pr-tog" id="prTog" aria-expanded="${presOpen}"><span>${presOpen?"Mostra meno":`Mostra tutti (${rows.length})`}</span><i class="pr-chev"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></i></button>`:""}
     </div></section>`;
 }
-function bindPres(){const t=$("#prTog"),m=$("#prMore");if(!t||!m)return;
+function bindPres(){const t=$("#prTog");if(!t)return;
   t.onclick=()=>{presOpen=!presOpen;const card=t.closest(".prs");card.classList.toggle("open",presOpen);t.setAttribute("aria-expanded",presOpen);
     t.querySelector("span").textContent=presOpen?"Mostra meno":`Mostra tutti (${S.players.length})`;
-    const red=reducedM();
-    if(presOpen){m.hidden=false;if(!red&&m.animate){const h=m.scrollHeight;m.animate([{height:"0px",opacity:0},{height:h+"px",opacity:1}],{duration:380,easing:"cubic-bezier(.22,1,.36,1)"});
-        m.querySelectorAll(".pr-row").forEach((r,i)=>r.animate([{opacity:0,transform:"translateY(-6px)"},{opacity:1,transform:"none"}],{duration:300,delay:60+i*25,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"}))}}
-    else{if(red||!m.animate){m.hidden=true;return}const h=m.offsetHeight;m.animate([{height:h+"px",opacity:1},{height:"0px",opacity:0}],{duration:300,easing:"cubic-bezier(.4,0,.2,1)"}).onfinish=()=>{if(!presOpen)m.hidden=true}}}}
+    if(!presOpen){const top=card.getBoundingClientRect().top;if(top<0)window.scrollBy({top:top-90,behavior:"smooth"})}}}
 function openAtt(id){
   const e=S.events.find(x=>x.id===id);if(!e)return;
   const fresh=!e.att||!Object.keys(e.att).length;
