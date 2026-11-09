@@ -32,7 +32,7 @@
 <link id="mcss" rel="stylesheet" href="style.css" media="print" onload="this.media='all';window.__css=1;window.__go&&window.__go()">
 </head>
 <body>
-<div id="boot" style="position:fixed;inset:0;z-index:60;background:#0b1854;display:grid;place-items:center;overflow:hidden"><canvas id="bootcv" style="position:absolute;inset:0;width:100%;height:100%"></canvas><div style="position:absolute;inset:0;background:radial-gradient(70% 60% at 50% 48%,transparent 30%,rgba(5,10,40,.55))"></div><img id="bootlogo" src="img/logo.webp" alt="" style="position:relative;height:clamp(120px,36vw,190px);width:auto;max-width:none;filter:drop-shadow(0 14px 28px rgba(0,0,0,.4))"></div>
+<div id="boot" style="position:fixed;left:0;top:0;width:100%;height:100%;z-index:45;background:#0b1854"></div>
 <script>
 /* sfondo a triangoli dell'apertura: disegnato subito, identico a quello dell'animazione */
 (function(){
@@ -56,7 +56,7 @@
     var d=Math.round(devicePixelRatio||1),k=Math.round(screen.width*d)+"x"+Math.round(screen.height*d);
     return ["640x1136","750x1334","828x1792","1080x2340","1125x2436","1170x2532","1179x2556","1206x2622","1242x2688","1284x2778","1290x2796","1320x2868"].indexOf(k)>=0?"icons/splash/s-"+k+".png":null}
   window.ABTRI={build:build,draw:draw,size:size,fh:fh,launchImg:launchImg};
-  try{var bt=document.getElementById("boot");bt.style.bottom="auto";bt.style.height=fh()+"px";var cv=document.getElementById("bootcv"),z=size(cv);draw(z.cx,build(z.W,z.H),0);var li=launchImg();if(li){var im=document.createElement("div");im.id="bootimg";im.style.cssText="position:absolute;inset:0;background:url("+li+") center/100% 100% no-repeat";bt.insertBefore(im,document.getElementById("bootlogo"))}}catch(e){}
+  try{var bt=document.getElementById("boot");bt.style.height=fh()+"px"}catch(e){}
 })();
 </script>
 <div id="app"></div>

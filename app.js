@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794238287";
+const APP_V="1794238631";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -967,13 +967,9 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";document.body.
   /* a tutto schermo come l'immagine d'avvio di iPhone (anche sotto la barra in basso) */
   if(window.ABTRI&&ABTRI.fh){sp.style.bottom="auto";sp.style.height=ABTRI.fh()+"px"}
   /* lo stesso stemma dell'avvio passa nell'intro, già caricato: nessun buco */
-  let hold=document.getElementById("bootlogo");
-  if(hold){hold.removeAttribute("style");hold.removeAttribute("id")}else{hold=document.createElement("img");hold.src=LOGO;hold.alt=""}
-  /* sopra i triangoli animati resta per un attimo l'immagine d'avvio identica, poi sfuma piano */
-  const li=window.ABTRI&&ABTRI.launchImg&&ABTRI.launchImg();let still=null;
-  if(li){still=document.createElement("div");still.className="sp-still";still.style.backgroundImage=`url(${li})`;sp.insertBefore(still,sp.querySelector(".sp-row"))}
-  hold.className="sp-hold";sp.appendChild(hold);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>dropBoot(false))); /* via solo quando l'intro è già a schermo */
+  /* si parte dal blu scuro dell'avvio: l'intro emerge piano da lì */
+  sp.style.opacity="0";const hold={remove(){}},still=null;
+
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
   const q=s=>sp.querySelector(s);
   const row=q(".sp-row"),wrap=q(".sp-logo-wrap"),line=q(".sp-line"),[t1,t2]=sp.querySelectorAll(".sp-text span"),sheen=q(".sp-sheen");
@@ -1038,8 +1034,8 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";document.body.
   let fl;try{fl=document.fonts&&document.fonts.load?document.fonts.load('700 40px "Antonio"').catch(()=>{}):null}catch(_){fl=null}
   const fontReady=Promise.race([fl||Promise.resolve(),new Promise(r=>setTimeout(r,700))]);
   const safety=setTimeout(()=>gate(),4500); /* in ogni caso l'intro si chiude */
-  const showFinal=()=>{hold.remove();if(still)still.remove();[wrap,t1,t2,line].forEach(el=>{el.style.opacity=1;el.style.transform="none"})};
-  if(reduced||!sp.animate){hold.remove();if(still)still.remove();
+  const showFinal=()=>{sp.style.opacity="1";dropBoot(false);[wrap,t1,t2,line].forEach(el=>{el.style.opacity=1;el.style.transform="none"})};
+  if(reduced||!sp.animate){sp.style.opacity="1";dropBoot(false);
     [wrap,t1,t2,line].forEach(el=>{el.style.opacity=1;el.style.transform="none"});
     setTimeout(gate,1600);return;
   }
@@ -1048,21 +1044,21 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";document.body.
   fontReady.then(()=>{try{
     const rw=row.getBoundingClientRect().width, lw=wrap.getBoundingClientRect().width;
     const dx=(rw-lw)/2;
+    const D=380; /* pausa sul blu scuro: copre l'attimo di assestamento all'apertura */
+    sp.animate([{opacity:0},{opacity:1}],{duration:700,delay:D,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"}).onfinish=()=>{sp.style.opacity="1";dropBoot(false)};
     wrap.animate([
-      {opacity:1,transform:`translateX(${dx}px) scale(1)`,easing:"ease-in-out"},
-      {opacity:1,transform:`translateX(${dx}px) scale(1.05)`,offset:.2,easing:"ease-in-out"},
-      {opacity:1,transform:`translateX(${dx}px) scale(1)`,offset:.34,easing:S},
-      {opacity:1,transform:"translateX(0px) scale(1)"}],
-      {duration:1550,fill:"forwards"});
-    hold.remove();
-    if(still){const st=still;st.animate([{opacity:1},{opacity:0}],{duration:900,easing:"ease-in-out",fill:"forwards"}).onfinish=()=>st.remove()}
-    sheen.animate([{backgroundPosition:"-150% 0"},{backgroundPosition:"250% 0"}],{duration:900,delay:120,easing:"ease-in-out",fill:"both"});
-    line.animate([{opacity:0,transform:"scaleY(0)"},{opacity:1,transform:"scaleY(1)"}],{duration:650,delay:760,easing:E,fill:"forwards"});
+      {opacity:0,transform:`translateX(${dx}px) scale(.62)`,filter:"blur(14px)",easing:E},
+      {opacity:1,transform:`translateX(${dx}px) scale(1.04)`,filter:"blur(0px)",offset:.38,easing:"ease-in-out"},
+      {opacity:1,transform:`translateX(${dx}px) scale(1)`,filter:"blur(0px)",offset:.5,easing:S},
+      {opacity:1,transform:"translateX(0px) scale(1)",filter:"blur(0px)"}],
+      {duration:2000,delay:D,fill:"both"});
+    sheen.animate([{backgroundPosition:"-150% 0"},{backgroundPosition:"250% 0"}],{duration:900,delay:D+650,easing:"ease-in-out",fill:"both"});
+    line.animate([{opacity:0,transform:"scaleY(0)"},{opacity:1,transform:"scaleY(1)"}],{duration:650,delay:D+1250,easing:E,fill:"forwards"});
     [t1,t2].forEach((el,i)=>el.animate([
       {opacity:0,transform:"translateX(-28px)",filter:"blur(8px)",clipPath:"inset(0 100% 0 0)"},
       {opacity:1,transform:"translateX(0)",filter:"blur(0)",clipPath:"inset(0 0% 0 0)"}],
-      {duration:850,delay:900+i*140,easing:E,fill:"forwards"}));
-    setTimeout(gate,2800);
+      {duration:850,delay:D+1400+i*140,easing:E,fill:"forwards"}));
+    setTimeout(gate,D+3300);
   }catch(_){showFinal();setTimeout(gate,1200)}}).catch(()=>{showFinal();setTimeout(gate,1200)});
 }
 runSplash();
@@ -1096,7 +1092,7 @@ async function checkUpdate(){
       const go=()=>{const rl=()=>{try{sessionStorage.setItem("ab-upd",JSON.stringify({t:Date.now(),tab,y:window.scrollY}))}catch(_){}
         /* velo uguale alla schermata d'avvio: l'aggiornamento si vede come una breve dissolvenza, non come un salto */
         const v=document.createElement("div");const li=window.ABTRI&&ABTRI.launchImg&&ABTRI.launchImg();
-        v.style.cssText="position:fixed;inset:0;z-index:90;opacity:0;transition:opacity .22s ease;background:#0b1854 "+(li?`url(${li}) center/100% 100% no-repeat`:"");
+        v.style.cssText="position:fixed;inset:0;z-index:90;opacity:0;transition:opacity .22s ease;background:#0b1854";
         document.body.appendChild(v);requestAnimationFrame(()=>{v.style.opacity="1"});setTimeout(()=>location.reload(),260)};if(dirty&&!saving&&MYID){save().finally(rl)}else rl()};
       const ok=()=>idleUI()&&!document.querySelector(".splash");if(ok())go();else{const t=setInterval(()=>{if(ok()){clearInterval(t);go()}},1500)}}
   }catch(_){}}
@@ -1106,8 +1102,7 @@ setTimeout(checkUpdate,6000);
    copriamo l'app con l'immagine d'avvio, così la "foto" è identica e non si vede la barra delle sezioni per un attimo */
 function veilOn(){if(document.getElementById("bgveil"))return;const li=window.ABTRI&&ABTRI.launchImg&&ABTRI.launchImg();
   const v=document.createElement("div");v.id="bgveil";
-  v.style.cssText="position:fixed;left:0;top:0;width:100vw;height:"+((window.ABTRI&&ABTRI.fh)?ABTRI.fh():innerHeight)+"px;z-index:95;pointer-events:none;background:#0b1854 "+(li?`url(${li}) center/100% 100% no-repeat`:"");
-  if(!li){const im=document.createElement("img");im.src=LOGO;im.alt="";im.style.cssText="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);height:clamp(120px,36vw,190px);width:auto;max-width:none;filter:drop-shadow(0 14px 28px rgba(0,0,0,.4))";v.appendChild(im)}
+  v.style.cssText="position:fixed;left:0;top:0;width:100vw;height:"+((window.ABTRI&&ABTRI.fh)?ABTRI.fh():innerHeight)+"px;z-index:95;pointer-events:none;background:#0b1854";
   document.body.appendChild(v)}
 function veilOff(){const v=document.getElementById("bgveil");if(!v)return;v.style.transition="opacity .35s ease";requestAnimationFrame(()=>{v.style.opacity="0"});setTimeout(()=>v.remove(),400)}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")veilOn();else setTimeout(veilOff,60)});
