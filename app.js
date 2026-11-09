@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794244076";
+const APP_V="1794244333";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -204,20 +204,20 @@ function openAtt(id){
       if(open){rp.hidden=false;el.classList.add("open");if(!red&&rp.animate)rp.animate([{opacity:0,maxHeight:"0px",paddingBottom:"0px"},{opacity:1,maxHeight:"60px",paddingBottom:"11px"}],{duration:280,easing:"cubic-bezier(.22,1,.36,1)"})}
       else{el.classList.remove("open");if(red||!rp.animate){rp.hidden=true;return}
         rp.animate([{opacity:1,maxHeight:rp.offsetHeight+"px",paddingBottom:"11px"},{opacity:0,maxHeight:"0px",paddingBottom:"0px"}],{duration:240,easing:"cubic-bezier(.4,0,.2,1)"}).onfinish=()=>{if(!el.classList.contains("open"))rp.hidden=true}}};
-    const commit=()=>{if(!changed)return;e.att=work;dirty=true;changed=false};
+    const commit=()=>{if(!changed)return;e.att=JSON.parse(JSON.stringify(work));dirty=true;changed=false};
     bg.addEventListener("click",ev=>{if(!canEdit)return;
       const t=ev.target.closest("[data-tg]"),o=ev.target.closest("[data-op]"),r=ev.target.closest("[data-rp]");
       if(t){const id=t.dataset.tg,cur=work[id]||{};const on=!cur.in;work[id]={in:on,rpe:on?(cur.rpe??null):null};changed=true;
         const el=bg.querySelector(`[data-pr="${id}"]`);el.classList.toggle("on",on);t.setAttribute("aria-pressed",on);
         if(!on){if(openP===id){fold(id,false);openP=null}el.querySelectorAll(".at-rpe button").forEach(b=>b.classList.remove("on"))}
-        setBadge(id);if(navigator.vibrate)navigator.vibrate(8);upd();return}
+        setBadge(id);if(navigator.vibrate)navigator.vibrate(8);upd();commit();autosave();return}
       if(o){const id=o.dataset.op;if(!(work[id]&&work[id].in))return;
         if(openP===id){fold(id,false);openP=null;return}
         if(openP)fold(openP,false);openP=id;fold(id,true);return}
       if(r){const [id,v]=r.dataset.rp.split(":");const n=+v;const cur=work[id]||{in:true};cur.in=true;cur.rpe=n;work[id]=cur;changed=true;
         r.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===r));
         if(!red&&r.animate)r.animate([{transform:"scale(.85)"},{transform:"scale(1.15)"},{transform:"scale(1)"}],{duration:220,easing:"cubic-bezier(.3,1.4,.5,1)"});
-        setTimeout(()=>{fold(id,false);if(openP===id)openP=null;setBadge(id)},170);upd();return}
+        setTimeout(()=>{fold(id,false);if(openP===id)openP=null;setBadge(id)},170);upd();commit();autosave();return}
     });
     const close=()=>{commit();closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
     q("#atOk").onclick=close;q("#atX").onclick=close;
