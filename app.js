@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794246567";
+const APP_V="1794246725";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -201,7 +201,7 @@ function openAtt(id){
   const fresh=!e.att||!Object.keys(e.att).length;
   const work=Object.fromEntries(S.players.map(p=>[p.id,{...attRec(e,p.id)}]));
   let changed=false, openP=null;
-  const sur=n=>{const i=n.indexOf(" ");return (i<0?n:n.slice(i+1)+" "+n.slice(0,i)).toLowerCase()};
+  const sur=n=>{if(/salah eddin/i.test(n))return "machal"; /* va prima di Marconcini */const i=n.indexOf(" ");return (i<0?n:n.slice(i+1)+" "+n.slice(0,i)).toLowerCase()};
   const srt=(a,b)=>sur(a.name).localeCompare(sur(b.name),"it"); /* ordine alfabetico per cognome */
   const d=pd(e.date);
   const head=()=>{const ids=S.players.map(p=>p.id),pres=ids.filter(i=>work[i]&&work[i].in),rp=pres.map(i=>work[i].rpe).filter(v=>v!=null),m=rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null;
@@ -217,7 +217,7 @@ function openAtt(id){
     <h3>Allenamento · ${GG[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</h3>
     <p class="ev-sub" style="margin:-4px 0 6px">Tutti presenti di default: togli la spunta a chi mancava. Tocca un nome per il suo RPE.</p>
     <div id="atHead">${head()}</div>
-    <div class="at-list">${(()=>{let last="";return S.players.slice().sort(srt).map(p=>{const L=sur(p.name).charAt(0).toUpperCase();const h=L!==last?`<div class="at-letter">${L}</div>`:"";last=L;return h+row(p)}).join("")})()}</div>
+    <div class="at-list">${S.players.slice().sort(srt).map(row).join("")}</div>
     <p class="at-leg"><b>RPE</b> 1 riposo · 3 facile · 5 un po' duro · 7 molto duro · 10 massimo</p>
     <div class="sheet-actions">${canEdit&&!fresh?'<button class="btn" id="atReset">Ripristina</button>':"<span></span>"}<button class="btn primary" id="atOk">Fatto</button></div>`,bg=>{
     const q=x=>bg.querySelector(x);
