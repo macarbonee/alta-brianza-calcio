@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794246291";
+const APP_V="1794246567";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -206,9 +206,9 @@ function openAtt(id){
   const d=pd(e.date);
   const head=()=>{const ids=S.players.map(p=>p.id),pres=ids.filter(i=>work[i]&&work[i].in),rp=pres.map(i=>work[i].rpe).filter(v=>v!=null),m=rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null;
     return `<div class="at-sum"><div><b>${pres.length}<i>/${ids.length}</i></b><small>Presenti</small></div><div><b style="color:${RPEC(m==null?null:Math.round(m))}">${m==null?"–":m.toFixed(1)}</b><small>RPE medio</small></div><div><b>${rp.length}<i>/${pres.length}</i></b><small>RPE inseriti</small></div></div>`};
-  const badge=r=>r&&r.in?(r.rpe!=null?`<span class="at-rb" style="--c:${RPEC(r.rpe)}">${r.rpe}</span>`:'<span class="at-rb empty">RPE</span>'):'<span class="at-rb off">assente</span>';
+  const badge=r=>r&&r.in?(r.rpe!=null?`<span class="at-rb" style="--c:${RPEC(r.rpe)}"><small>RPE</small>${r.rpe}</span>`:'<span class="at-rb empty"><small>RPE</small>+</span>'):'<span class="at-rb off">Assente</span>';
   const row=p=>{const r=work[p.id]||{in:false};
-    return `<div class="at-row ${r.in?"on":""}" data-pr="${p.id}" style="--rc:${RCOL[p.role]}">
+    return `<div class="at-row ${r.in?"on":""}" data-pr="${p.id}" style="--rc:${RCOL[p.role]};--sc:${r.in?(r.rpe!=null?RPEC(r.rpe):"var(--win)"):"var(--loss)"}">
       <div class="at-line"><button class="at-ck" data-tg="${p.id}" ${canEdit?"":"disabled"} aria-pressed="${!!r.in}" aria-label="Presente"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
         <button class="at-who" data-op="${p.id}" ${canEdit?"":"disabled"}><span class="at-nm">${nameHTML(p.name)}</span>${badge(r)}</button></div>
       <div class="at-rpe" hidden>${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button data-rp="${p.id}:${v}" class="${r.rpe===v?"on":""}" style="--c:${RPEC(v)}" aria-label="RPE ${v}">${v}</button>`).join("")}</div>
@@ -217,13 +217,13 @@ function openAtt(id){
     <h3>Allenamento · ${GG[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</h3>
     <p class="ev-sub" style="margin:-4px 0 6px">Tutti presenti di default: togli la spunta a chi mancava. Tocca un nome per il suo RPE.</p>
     <div id="atHead">${head()}</div>
-    <div class="at-list">${S.players.slice().sort(srt).map(row).join("")}</div>
+    <div class="at-list">${(()=>{let last="";return S.players.slice().sort(srt).map(p=>{const L=sur(p.name).charAt(0).toUpperCase();const h=L!==last?`<div class="at-letter">${L}</div>`:"";last=L;return h+row(p)}).join("")})()}</div>
     <p class="at-leg"><b>RPE</b> 1 riposo · 3 facile · 5 un po' duro · 7 molto duro · 10 massimo</p>
     <div class="sheet-actions">${canEdit&&!fresh?'<button class="btn" id="atReset">Ripristina</button>':"<span></span>"}<button class="btn primary" id="atOk">Fatto</button></div>`,bg=>{
     const q=x=>bg.querySelector(x);
     const upd=()=>{q("#atHead").innerHTML=head()};
     const red=reducedM();
-    const setBadge=id=>{const b=bg.querySelector(`[data-op="${id}"] .at-rb`);const t=document.createElement("span");t.innerHTML=badge(work[id]);const nb=t.firstChild;b.replaceWith(nb);
+    const setBadge=id=>{const rw=work[id]||{};const el0=bg.querySelector(`[data-pr="${id}"]`);if(el0)el0.style.setProperty("--sc",rw.in?(rw.rpe!=null?RPEC(rw.rpe):"var(--win)"):"var(--loss)");const b=bg.querySelector(`[data-op="${id}"] .at-rb`);const t=document.createElement("span");t.innerHTML=badge(work[id]);const nb=t.firstChild;b.replaceWith(nb);
       if(!red&&nb.animate)nb.animate([{transform:"scale(.4)",opacity:0},{transform:"scale(1.18)",opacity:1,offset:.6},{transform:"scale(1)"}],{duration:380,easing:"cubic-bezier(.3,1.3,.5,1)"})};
     const fold=(id,open)=>{const el=bg.querySelector(`[data-pr="${id}"]`);if(!el)return;const rp=el.querySelector(".at-rpe");
       if(open){rp.hidden=false;el.classList.add("open");if(!red&&rp.animate)rp.animate([{opacity:0,maxHeight:"0px",paddingBottom:"0px"},{opacity:1,maxHeight:"60px",paddingBottom:"11px"}],{duration:280,easing:"cubic-bezier(.22,1,.36,1)"})}
