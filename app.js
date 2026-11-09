@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794235269";
+const APP_V="1794235843";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -964,7 +964,12 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;dropBoot(false);return}
   sp.innerHTML=`<canvas></canvas><div class="sp-row"><div class="sp-logo-wrap"><img class="sp-logo" src="${LOGO}" alt=""><div class="sp-sheen" style="--m:url('${LOGO}')"></div></div><div class="sp-side"><div class="sp-line"></div><div class="sp-text"><span>Alta</span><span>Brianza</span></div></div></div>`;
   document.body.appendChild(sp);
   /* il logo resta fermo al centro, come all'avvio, finché l'animazione è pronta a partire */
-  const hold=document.createElement("img");hold.className="sp-hold";hold.src=LOGO;hold.alt="";sp.appendChild(hold);
+  /* a tutto schermo come l'immagine d'avvio di iPhone (anche sotto la barra in basso) */
+  if(window.ABTRI&&ABTRI.fh){sp.style.bottom="auto";sp.style.height=ABTRI.fh()+"px"}
+  /* lo stesso stemma dell'avvio passa nell'intro, già caricato: nessun buco */
+  let hold=document.getElementById("bootlogo");
+  if(hold){hold.removeAttribute("style");hold.removeAttribute("id")}else{hold=document.createElement("img");hold.src=LOGO;hold.alt=""}
+  hold.className="sp-hold";sp.appendChild(hold);
   dropBoot(false);
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
   const q=s=>sp.querySelector(s);
