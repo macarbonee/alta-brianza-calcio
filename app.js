@@ -3,6 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+const APP_V="1794233966";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -64,7 +65,7 @@ function subscribe(){
     const n=p&&p.new;if(n&&n.updated_by!==MYID)applyRemote(n)}).subscribe()}catch(_){}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&MYID)loadData().catch(()=>{})});
 addEventListener("online",()=>{if(MYID){if(dirty&&!saving)save();else loadData().catch(()=>{})}});
-let RESUME=null;
+let RESUME=null;try{const u=JSON.parse(sessionStorage.getItem("ab-upd")||"null");sessionStorage.removeItem("ab-upd");if(u&&Date.now()-u.t<60000)RESUME=u}catch(_){}
 let tab=RESUME&&["squadra","partite","rosa","tattica"].includes(RESUME.tab)?RESUME.tab:["squadra","partite","rosa","tattica"].includes(location.hash.slice(1))?location.hash.slice(1):"squadra";
 const now=new Date(); const todayISO=iso(now);
 let calY=now.getFullYear(), calM=now.getMonth(), selDay=todayISO;
@@ -1087,4 +1088,14 @@ document.addEventListener("click",e=>{
   if(!e.target.closest(".prof-pop"))closeProf();
 },true);
 addEventListener("scroll",closeProf,{passive:true});
+/* aggiornamenti: quando torni nell'app controlla se c'è una versione nuova e si aggiorna da sola */
+async function checkUpdate(){
+  try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const j=await r.json();
+    let tried=null;try{tried=localStorage.getItem("ab-upd-try")}catch(_){}
+    if(j.v&&j.v!==APP_V&&tried!==j.v){try{localStorage.setItem("ab-upd-try",j.v)}catch(_){}
+      const go=()=>{const rl=()=>{try{sessionStorage.setItem("ab-upd",JSON.stringify({t:Date.now(),tab,y:window.scrollY}))}catch(_){}location.reload()};if(dirty&&!saving&&MYID){save().finally(rl)}else rl()};
+      if(idleUI()&&!document.querySelector(".splash"))go();else{const t=setInterval(()=>{if(idleUI()){clearInterval(t);go()}},1500)}}
+  }catch(_){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
+setTimeout(checkUpdate,6000);
 })();
