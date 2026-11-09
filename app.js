@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794237794";
+const APP_V="1794237986";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -1102,4 +1102,15 @@ async function checkUpdate(){
   }catch(_){}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
 setTimeout(checkUpdate,6000);
+/* quando l'app va in sottofondo, iPhone ne fotografa lo schermo e lo rimostra alla riapertura:
+   copriamo l'app con l'immagine d'avvio, così la "foto" è identica e non si vede la barra delle sezioni per un attimo */
+function veilOn(){if(document.getElementById("bgveil"))return;const li=window.ABTRI&&ABTRI.launchImg&&ABTRI.launchImg();
+  const v=document.createElement("div");v.id="bgveil";
+  v.style.cssText="position:fixed;left:0;top:0;width:100vw;height:"+((window.ABTRI&&ABTRI.fh)?ABTRI.fh():innerHeight)+"px;z-index:95;pointer-events:none;background:#0b1854 "+(li?`url(${li}) center/100% 100% no-repeat`:"");
+  if(!li){const im=document.createElement("img");im.src=LOGO;im.alt="";im.style.cssText="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);height:clamp(120px,36vw,190px);width:auto;max-width:none;filter:drop-shadow(0 14px 28px rgba(0,0,0,.4))";v.appendChild(im)}
+  document.body.appendChild(v)}
+function veilOff(){const v=document.getElementById("bgveil");if(!v)return;v.style.transition="opacity .35s ease";requestAnimationFrame(()=>{v.style.opacity="0"});setTimeout(()=>v.remove(),400)}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")veilOn();else setTimeout(veilOff,60)});
+addEventListener("pagehide",veilOn);
+addEventListener("pageshow",()=>setTimeout(veilOff,60));
 })();
