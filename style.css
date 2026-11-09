@@ -957,3 +957,10 @@ section > h2 > .hist{margin-left:auto;display:flex;gap:6px}
 .bch[data-fit="2"] .bfit{background:#1f8a55}.bch[data-fit="1"] .bfit{background:#c98a12}.bch[data-fit="0"] .bfit{background:#c9413a}
 .bch.pick[data-fit="0"]{opacity:.55}
 .bch.pick[data-fit="2"]{box-shadow:0 0 0 2px #1f8a55,0 10px 22px rgba(31,138,85,.3)}
+
+/* app installata (schermata Home): intestazione più in basso, colore che sale fin sotto l'orologio; barra schede più in basso */
+@media (display-mode: standalone){
+  body::before{background:linear-gradient(120deg,#0b1854,#15297c);height:calc(env(safe-area-inset-top,0px) + 2px)}
+  header.top .wrap{padding-top:24px;padding-bottom:16px}
+  .tabbar{bottom:max(6px,calc(env(safe-area-inset-bottom,0px) - 14px))}
+}
