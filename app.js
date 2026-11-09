@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794244333";
+const APP_V="1794244840";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -169,9 +169,38 @@ function vAllen(){
       <div class="a-big"><b>${fatti}</b><span>Allenamenti fatti</span></div>
       <div class="a-big" style="--c:${RPEC(avgR==null?null:Math.round(avgR))}"><b class="rpe">${avgR==null?"–":avgR.toFixed(1)}</b><span>RPE medio stagione</span>${avgR!=null?`<i class="a-bar"><i style="width:${avgR*10}%"></i></i>`:""}</div>
     </div></section>
+  ${presSection()}
   ${next.length?`<section><h2>Prossimi</h2><div class="mlist">${next.map(allRow).join("")}</div></section>`:""}
   <section><h2>Svolti · ${past.length}</h2><div class="mlist">${past.length?months(past):'<div class="card empty">Gli allenamenti svolti compariranno qui: toccali per segnare presenze e RPE.</div>'}</div></section>`;
 }
+let presOpen=false;
+const PCTC=v=>v==null?"var(--muted)":`hsl(${Math.round(Math.max(0,Math.min(1,(v-.5)/.5))*125)} 68% 44%)`;
+function presSection(){
+  const rows=S.players.map(p=>{const a=playerAtt(p.id);return {p,tot:a.tot,pres:a.pres,ass:a.tot-a.pres,pct:a.tot?a.pres/a.tot:null}})
+    .sort((x,y)=>(y.pct??-1)-(x.pct??-1)||x.ass-y.ass||x.p.name.localeCompare(y.p.name));
+  if(!rows.length)return "";
+  const row=r=>`<div class="pr-row" style="--c:${PCTC(r.pct)}">
+      <span class="pr-nm">${nameHTML(r.p.name)}</span>
+      <span class="pr-bar"><i style="width:${r.pct==null?0:Math.round(r.pct*100)}%"></i></span>
+      <span class="pr-pct">${r.pct==null?"–":Math.round(r.pct*100)+"%"}</span>
+      <span class="pr-ass ${r.ass?"":"zero"}">${r.ass} ${r.ass===1?"assenza":"assenze"}</span></div>`;
+  const top=rows.slice(0,3),rest=rows.slice(3);
+  const tot=rows[0].tot;
+  return `<section><h2>Presenze giocatori</h2>
+    <div class="card prs ${presOpen?"open":""}">
+      ${tot?"":'<p class="pr-note">Le percentuali partono dagli allenamenti segnati nell\'app, dal 10 novembre in poi.</p>'}
+      <div class="pr-list">${top.map(row).join("")}</div>
+      ${rest.length?`<div class="pr-more" id="prMore" ${presOpen?"":"hidden"}><div class="pr-list">${rest.map(row).join("")}</div></div>
+      <button class="pr-tog" id="prTog" aria-expanded="${presOpen}"><span>${presOpen?"Mostra meno":`Mostra tutti (${rows.length})`}</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>`:""}
+    </div></section>`;
+}
+function bindPres(){const t=$("#prTog"),m=$("#prMore");if(!t||!m)return;
+  t.onclick=()=>{presOpen=!presOpen;const card=t.closest(".prs");card.classList.toggle("open",presOpen);t.setAttribute("aria-expanded",presOpen);
+    t.querySelector("span").textContent=presOpen?"Mostra meno":`Mostra tutti (${S.players.length})`;
+    const red=reducedM();
+    if(presOpen){m.hidden=false;if(!red&&m.animate){const h=m.scrollHeight;m.animate([{height:"0px",opacity:0},{height:h+"px",opacity:1}],{duration:380,easing:"cubic-bezier(.22,1,.36,1)"});
+        m.querySelectorAll(".pr-row").forEach((r,i)=>r.animate([{opacity:0,transform:"translateY(-6px)"},{opacity:1,transform:"none"}],{duration:300,delay:60+i*25,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"}))}}
+    else{if(red||!m.animate){m.hidden=true;return}const h=m.offsetHeight;m.animate([{height:h+"px",opacity:1},{height:"0px",opacity:0}],{duration:300,easing:"cubic-bezier(.4,0,.2,1)"}).onfinish=()=>{if(!presOpen)m.hidden=true}}}}
 function openAtt(id){
   const e=S.events.find(x=>x.id===id);if(!e)return;
   const fresh=!e.att||!Object.keys(e.att).length;
@@ -1051,6 +1080,7 @@ function bind(){
   const es=$("#editSt");if(es)es.onclick=editStandings;
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>goTab(b.dataset.go));
   document.querySelectorAll("[data-att]").forEach(b=>b.onclick=()=>openAtt(b.dataset.att));
+  bindPres();
   document.querySelectorAll("[data-match]").forEach(el=>el.onclick=()=>openMatch(el.dataset.match,el));
   document.querySelectorAll("[data-open]").forEach(el=>{el.onclick=()=>openEvent(el.dataset.open,el);el.onkeydown=k=>{if(k.key==="Enter"||k.key===" "){k.preventDefault();openEvent(el.dataset.open,el)}}});
   bindTattica();

@@ -1,6 +1,6 @@
 /* funziona anche senza connessione: tiene una copia dell'app sul telefono.
    Pagine e codice: prima la rete (così gli aggiornamenti arrivano subito), se offline la copia. */
-const V="ab-v32";
+const V="ab-v33";
 const SHELL=["./","index.html","style.css","app.js","config.js","logos.js","manifest.webmanifest","img/logo.webp","img/train.webp","img/match.webp","icons/icon-192.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
