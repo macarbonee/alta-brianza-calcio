@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794247301";
+const APP_V="1794247528";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -211,7 +211,7 @@ function openAtt(id){
     return `<div class="at-row ${r.in?"on":""}" data-pr="${p.id}" style="--rc:${RCOL[p.role]};--sc:${r.in?(r.rpe!=null?RPEC(r.rpe):"var(--win)"):"var(--loss)"}">
       <div class="at-line"><button class="at-ck" data-tg="${p.id}" ${canEdit?"":"disabled"} aria-pressed="${!!r.in}" aria-label="Presente"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
         <button class="at-who" data-op="${p.id}" ${canEdit?"":"disabled"}><span class="at-nm">${nameHTML(p.name)}</span>${badge(r)}</button></div>
-      <div class="at-rw"><div class="at-rpe">${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button data-rp="${p.id}:${v}" class="${r.rpe===v?"on":""}" style="--c:${RPEC(v)};--i:${v-1}" tabindex="-1" aria-label="RPE ${v}">${v}</button>`).join("")}</div></div>
+      <div class="at-pick" aria-hidden="true"><div class="at-rpe">${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button data-rp="${p.id}:${v}" class="${r.rpe===v?"on":""}" style="--c:${RPEC(v)};--i:${v-1}" tabindex="-1" aria-label="RPE ${v}">${v}</button>`).join("")}</div><button class="at-pk-x" data-pkx="${p.id}" tabindex="-1" aria-label="Chiudi">×</button></div>
     </div>`};
   sheet(`<button class="sheet-x" id="atX" aria-label="Chiudi">×</button>
     <h3>Allenamento · ${GG[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</h3>
@@ -226,8 +226,9 @@ function openAtt(id){
     const setBadge=(id,pop=true)=>{const rw=work[id]||{};const el0=bg.querySelector(`[data-pr="${id}"]`);if(el0)el0.style.setProperty("--sc",rw.in?(rw.rpe!=null?RPEC(rw.rpe):"var(--win)"):"var(--loss)");const b=bg.querySelector(`[data-op="${id}"] .at-rb`);const t=document.createElement("span");t.innerHTML=badge(work[id]);const nb=t.firstChild;b.replaceWith(nb);
       if(pop&&!red&&nb.animate)nb.animate([{transform:"scale(.6)",opacity:0},{transform:"scale(1.08)",opacity:1,offset:.6},{transform:"scale(1)"}],{duration:420,easing:"cubic-bezier(.22,1,.36,1)"});return nb};
     /* la tendina dei numeri si apre e chiude con una transizione CSS (fluida anche su iPhone) */
+    /* i numeri compaiono sopra la targhetta stessa: niente cambi di altezza, quindi fluido anche con tanti giocatori */
     const fold=(id,open)=>{const el=bg.querySelector(`[data-pr="${id}"]`);if(!el)return;el.classList.toggle("open",open);
-      el.querySelectorAll(".at-rpe button").forEach(b=>b.tabIndex=open?0:-1)};
+      const pk=el.querySelector(".at-pick");pk.setAttribute("aria-hidden",!open);pk.querySelectorAll("button").forEach(b=>b.tabIndex=open?0:-1)};
     /* il numero scelto "vola" nel riquadro RPE accanto al nome */
     const fly=(btn,id)=>{const el=bg.querySelector(`[data-pr="${id}"]`);const old=el.querySelector(".at-rb");
       if(red||!btn.animate){setBadge(id,false);return}
@@ -239,7 +240,8 @@ function openAtt(id){
         nb.animate([{transform:"scale(1.12)"},{transform:"scale(1)"}],{duration:260,easing:"cubic-bezier(.22,1,.36,1)"})}};
     const commit=()=>{if(!changed)return;e.att=JSON.parse(JSON.stringify(work));dirty=true;changed=false};
     bg.addEventListener("click",ev=>{if(!canEdit)return;
-      const t=ev.target.closest("[data-tg]"),o=ev.target.closest("[data-op]"),r=ev.target.closest("[data-rp]");
+      const t=ev.target.closest("[data-tg]"),o=ev.target.closest("[data-op]"),r=ev.target.closest("[data-rp]"),x=ev.target.closest("[data-pkx]");
+      if(x){fold(x.dataset.pkx,false);if(openP===x.dataset.pkx)openP=null;return}
       if(t){const id=t.dataset.tg,cur=work[id]||{};const on=!cur.in;work[id]={in:on,rpe:on?(cur.rpe??null):null};changed=true;
         const el=bg.querySelector(`[data-pr="${id}"]`);el.classList.toggle("on",on);t.setAttribute("aria-pressed",on);
         if(!on){if(openP===id){fold(id,false);openP=null}el.querySelectorAll(".at-rpe button").forEach(b=>b.classList.remove("on"))}
@@ -249,7 +251,7 @@ function openAtt(id){
         if(openP)fold(openP,false);openP=id;fold(id,true);return}
       if(r){const [id,v]=r.dataset.rp.split(":");const n=+v;const cur=work[id]||{in:true};cur.in=true;cur.rpe=n;work[id]=cur;changed=true;
         r.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===r));
-        fly(r,id);setTimeout(()=>{fold(id,false);if(openP===id)openP=null},140);upd();commit();autosave();return}
+        fold(id,false);if(openP===id)openP=null;fly(r,id);upd();commit();autosave();return}
     });
     const close=()=>{commit();closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
     q("#atOk").onclick=close;q("#atX").onclick=close;
