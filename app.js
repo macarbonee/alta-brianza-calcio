@@ -52,8 +52,11 @@ function applyRemote(row,force){
   if(!row||!row.data)return;
   if(REMOTE_AT&&row.updated_at&&row.updated_at<=REMOTE_AT)return;
   if(!force&&!idleUI()){pendingRemote=row;return}
-  pendingRemote=null;REMOTE_AT=row.updated_at||REMOTE_AT;S=withLogos(row.data);cacheS();
-  anim="";const y=window.scrollY;render();window.scrollTo(0,y)}
+  pendingRemote=null;REMOTE_AT=row.updated_at||REMOTE_AT;
+  if(JSON.stringify(stripLogos(withLogos(row.data)))===JSON.stringify(stripLogos(S)))return; /* niente di nuovo: nessun ridisegno */
+  S=withLogos(row.data);cacheS();
+  if(document.querySelector(".splash"))return; /* sotto l'intro: si vede già aggiornato all'apertura */
+  anim="a-soft";const y=window.scrollY;render();window.scrollTo(0,y);anim=""}
 setInterval(()=>{if(pendingRemote&&idleUI())applyRemote(pendingRemote)},1500);
 function subscribe(){
   if(!SB||rtChan)return;
@@ -983,7 +986,7 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;return}
   build();draw(t0);addEventListener("resize",()=>{if(alive){build();if(reduced)draw(performance.now())}});
 
   let done=false;
-  const hide=()=>{if(done)return;done=true;clearTimeout(safety);anim="a-fade";render();
+  const hide=()=>{if(done)return;done=true;clearTimeout(safety);anim="a-open";render();setTimeout(()=>{if(anim==="a-open")anim=""},1400);
     const end=()=>{alive=false;cancelAnimationFrame(raf);sp.remove()};
     if(reduced||!sp.animate){end();return}
     row.animate([{transform:getComputedStyle(row).transform==="none"?"none":getComputedStyle(row).transform,opacity:1,filter:"blur(0)"},{transform:"scale(1.08)",opacity:0,filter:"blur(6px)"}],{duration:550,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"});
@@ -1024,7 +1027,7 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;return}
       busy=true;go.disabled=true;go.innerHTML='<span class="spin" aria-hidden="true"></span>Entra';
       try{const me=await abdSignIn(w[0],w.slice(1).join(" "),cd.value);
         nm.blur();cd.blur();go.disabled=false;go.classList.add("ok");go.textContent="Ciao "+me.first+"!";
-        setTimeout(()=>{sp.classList.remove("login-open");hide()},750)}
+        setTimeout(()=>{lg.style.transition="opacity .35s ease, transform .45s cubic-bezier(.4,0,.2,1)";lg.style.opacity="0";lg.style.transform="translateY(-10px) scale(.97)";hide()},650)}
       catch(x){busy=false;go.disabled=false;go.textContent="Entra";err.textContent=(x&&x.msg)||"Accesso non riuscito.";shake()}};
     function shake(){if(!reduced&&form.animate)form.animate([{transform:"translateX(0)"},{transform:"translateX(-9px)"},{transform:"translateX(8px)"},{transform:"translateX(-5px)"},{transform:"translateX(0)"}],{duration:380,easing:"ease-out"})}
   }
