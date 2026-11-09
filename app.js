@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794242250";
+const APP_V="1794243028";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -11,7 +11,7 @@ const EMPTY={team:"Alta Brianza Tavernerio",short:"Alta Brianza Tavernerio",cate
 function withLogos(d){return Object.assign({},EMPTY,d||{},{logos:LOGOS})}
 function stripLogos(o){const {logos,...r}=o;return r}
 let S=withLogos((()=>{try{return JSON.parse(localStorage.getItem("ab-cache")||"null")}catch(_){return null}})());
-const ORDER=["squadra","partite","rosa","tattica"];
+const ORDER=["squadra","partite","allenamenti","rosa","tattica"];
 let anim="", calAnim="", dayAnim=false, pillFromX=null, dayTouched=false, dragJustEnded=false;
 let dirty=false, canEdit=false, editMode=false, art=null, saving=false;
 /* accesso: solo al primo ingresso, poi resta collegato su questo telefono */
@@ -78,7 +78,7 @@ addEventListener("online",async()=>{if(!MYID||!SB)return;
   try{const {data}=await SB.auth.getSession();if(!(data&&data.session)){/* sessione da rinnovare: riprova tra poco */return}}catch(_){return}
   subscribe();if((dirty||isPending())&&!saving){dirty=true;save().then(ok=>{if(ok)loadData().catch(()=>{})})}else loadData().catch(()=>{})});
 let RESUME=null;try{const u=JSON.parse(sessionStorage.getItem("ab-upd")||"null");sessionStorage.removeItem("ab-upd");if(u&&Date.now()-u.t<60000)RESUME=u}catch(_){}
-let tab=RESUME&&["squadra","partite","rosa","tattica"].includes(RESUME.tab)?RESUME.tab:["squadra","partite","rosa","tattica"].includes(location.hash.slice(1))?location.hash.slice(1):"squadra";
+let tab=RESUME&&ORDER.includes(RESUME.tab)?RESUME.tab:ORDER.includes(location.hash.slice(1))?location.hash.slice(1):"squadra";
 const now=new Date(); const todayISO=iso(now);
 let calY=now.getFullYear(), calM=now.getMonth(), selDay=todayISO;
 const $=s=>document.querySelector(s);
@@ -134,18 +134,94 @@ function monthList(arr,emptyHTML){
     if(k!==last){out+=`<div class="mmonth"><span>${k}</span></div>`;last=k}out+=evRow(e)});
   return out;
 }
+/* ---------- ALLENAMENTI: presenze e RPE ---------- */
+const RPEC=v=>v==null?"var(--muted)":`hsl(${Math.round(130-(v-1)*13.3)} 70% ${v>=8?46:42}%)`;
+const RPEL=["","Riposo","Molto facile","Facile","Moderato","Un po' duro","Duro","Molto duro","Durissimo","Quasi al massimo","Massimo"];
+function attOf(e){return e.att||{}}
+function attStats(e){const a=attOf(e),ids=S.players.map(p=>p.id),pres=ids.filter(id=>a[id]&&a[id].in),rp=pres.map(id=>a[id].rpe).filter(v=>v!=null);
+  return {done:Object.keys(a).length>0,pres:pres.length,tot:ids.length,rpe:rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null,nrpe:rp.length}}
+function playerAtt(pid){let tot=0,pres=0,sum=0,n=0;S.events.filter(e=>e.type!=="partita"&&e.att&&Object.keys(e.att).length).forEach(e=>{tot++;const r=e.att[pid];if(r&&r.in){pres++;if(r.rpe!=null){sum+=r.rpe;n++}}});
+  return {tot,pres,rpe:n?sum/n:null}}
+function allRow(e){const d=pd(e.date),st=attStats(e),fut=e.date>todayISO;
+  return `<button class="card arow ${fut?"fut":""} ${st.done?"ok":""}" data-att="${e.id}">
+    <span class="ar-d"><b>${d.getDate()}</b><small>${GG[d.getDay()]}</small></span>
+    <span class="ar-m"><b>Allenamento</b><small>ore ${esc(e.time)}${e.end?"–"+esc(e.end):""}${e.place?" · "+esc(e.place):""}</small></span>
+    ${st.done?`<span class="ar-s"><span class="ar-p"><b>${st.pres}</b><i>/${st.tot}</i></span><span class="ar-r" style="--c:${RPEC(st.rpe==null?null:Math.round(st.rpe))}">${st.rpe==null?"RPE –":"RPE "+st.rpe.toFixed(1)}</span></span>`
+      :`<span class="ar-tag">${fut?"In programma":"Da compilare"}</span>`}
+  </button>`}
+function vAllen(){
+  const tr=sorted().filter(e=>e.type!=="partita");
+  const past=tr.filter(e=>e.date<=todayISO).reverse(), next=tr.filter(e=>e.date>todayISO).slice(0,3);
+  const comp=past.filter(e=>attStats(e).done);
+  const avgP=comp.length?comp.reduce((x,e)=>{const s=attStats(e);return x+s.pres/s.tot},0)/comp.length:null;
+  const rp=comp.map(e=>attStats(e).rpe).filter(v=>v!=null),avgR=rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null;
+  const months=arr=>{let last="",out="";arr.forEach(e=>{const d=pd(e.date),k=MESI[d.getMonth()]+" "+d.getFullYear();if(k!==last){out+=`<div class="mmonth"><span>${k}</span></div>`;last=k}out+=allRow(e)});return out};
+  return `<section><h2>Allenamenti</h2>
+    <div class="totals atot">
+      <div class="card tot"><b>${comp.length}</b><span>Registrati</span></div>
+      <div class="card tot"><b>${avgP==null?"–":Math.round(avgP*100)+"%"}</b><span>Presenze</span></div>
+      <div class="card tot"><b style="color:${RPEC(avgR==null?null:Math.round(avgR))}">${avgR==null?"–":avgR.toFixed(1)}</b><span>RPE medio</span></div></div>
+    <p class="ev-sub rhint">Tocca un allenamento per segnare chi c'era e l'RPE di ognuno (fatica da 1 a 10).</p></section>
+  ${next.length?`<section><h2>Prossimi</h2><div class="mlist">${next.map(allRow).join("")}</div></section>`:""}
+  <section><h2>Svolti · ${past.length}</h2><div class="mlist">${past.length?months(past):'<div class="card empty">Nessun allenamento svolto finora.</div>'}</div></section>`;
+}
+function openAtt(id){
+  const e=S.events.find(x=>x.id===id);if(!e)return;
+  const work=JSON.parse(JSON.stringify(e.att||{}));let changed=false;
+  const srt=(a,b)=>ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||a.num-b.num;
+  const d=pd(e.date);
+  const head=()=>{const ids=S.players.map(p=>p.id),pres=ids.filter(i=>work[i]&&work[i].in),rp=pres.map(i=>work[i].rpe).filter(v=>v!=null),m=rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null;
+    return `<div class="at-sum"><div><b>${pres.length}<i>/${ids.length}</i></b><small>Presenti</small></div><div><b style="color:${RPEC(m==null?null:Math.round(m))}">${m==null?"–":m.toFixed(1)}</b><small>RPE medio</small></div><div><b>${rp.length}<i>/${pres.length}</i></b><small>RPE inseriti</small></div></div>`};
+  const row=p=>{const r=work[p.id]||{},on=!!r.in;
+    return `<div class="at-row ${on?"on":""}" data-pr="${p.id}" style="--rc:${RCOL[p.role]}">
+      <button class="at-who" data-tg="${p.id}" ${canEdit?"":"disabled"} aria-pressed="${on}"><span class="at-ck" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        <span class="at-nm">${nameHTML(p.name)}</span><span class="at-num">${esc(p.num)}</span></button>
+      <div class="at-rpe" ${on?"":"hidden"}>${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button data-rp="${p.id}:${v}" class="${r.rpe===v?"on":""}" style="--c:${RPEC(v)}" ${canEdit?"":"disabled"} aria-label="RPE ${v}">${v}</button>`).join("")}</div>
+    </div>`};
+  sheet(`<button class="sheet-x" id="atX" aria-label="Chiudi">×</button>
+    <h3>Allenamento · ${GG[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</h3>
+    <p class="ev-sub" style="margin:-4px 0 6px">ore ${esc(e.time)}${e.end?"–"+esc(e.end):""} · tocca il nome per segnarlo presente, poi il suo RPE</p>
+    <div id="atHead">${head()}</div>
+    ${canEdit?`<div class="at-tools"><button class="btn small" id="atAll">Tutti presenti</button><button class="btn small" id="atNone">Azzera</button></div>`:""}
+    <div class="at-list">${S.players.slice().sort(srt).map(row).join("")}</div>
+    <p class="at-leg"><b>RPE</b> 1 riposo · 3 facile · 5 un po' duro · 7 molto duro · 10 massimo</p>
+    <div class="sheet-actions"><span></span><button class="btn primary" id="atOk">Fatto</button></div>`,bg=>{
+    const q=x=>bg.querySelector(x);
+    const upd=()=>{q("#atHead").innerHTML=head()};
+    const commit=()=>{if(!changed)return;Object.keys(work).forEach(k=>{if(!work[k].in&&work[k].rpe==null&&!work[k].in)work[k]={in:false}});e.att=work;dirty=true;changed=false};
+    bg.addEventListener("click",ev=>{
+      const t=ev.target.closest("[data-tg]"),r=ev.target.closest("[data-rp]");
+      if(t&&canEdit){const id=t.dataset.tg,cur=work[id]||{};const on=!cur.in;work[id]={in:on,rpe:on?(cur.rpe??null):null};changed=true;
+        const el=bg.querySelector(`[data-pr="${id}"]`);el.classList.toggle("on",on);t.setAttribute("aria-pressed",on);const rp=el.querySelector(".at-rpe");rp.hidden=!on;
+        if(!on)rp.querySelectorAll("button").forEach(b=>b.classList.remove("on"));
+        if(on&&rp.animate&&!reducedM())rp.animate([{opacity:0,transform:"translateY(-6px)"},{opacity:1,transform:"none"}],{duration:260,easing:"cubic-bezier(.22,1,.36,1)"});
+        if(navigator.vibrate)navigator.vibrate(8);upd();return}
+      if(r&&canEdit){const [id,v]=r.dataset.rp.split(":");const n=+v;const cur=work[id]||{in:true};cur.rpe=cur.rpe===n?null:n;cur.in=true;work[id]=cur;changed=true;
+        r.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===r&&cur.rpe===n));
+        if(r.animate&&!reducedM()&&cur.rpe===n)r.animate([{transform:"scale(.8)"},{transform:"scale(1.15)"},{transform:"scale(1)"}],{duration:280,easing:"cubic-bezier(.3,1.4,.5,1)"});upd();return}
+    });
+    const all=q("#atAll");if(all)all.onclick=()=>{S.players.forEach(p=>{const c=work[p.id]||{};work[p.id]={in:true,rpe:c.rpe??null}});changed=true;
+      bg.querySelectorAll(".at-row").forEach(el=>{el.classList.add("on");el.querySelector(".at-rpe").hidden=false;el.querySelector("[data-tg]").setAttribute("aria-pressed","true")});upd()};
+    const none=q("#atNone");if(none)none.onclick=()=>{Object.keys(work).forEach(k=>delete work[k]);changed=true;
+      bg.querySelectorAll(".at-row").forEach(el=>{el.classList.remove("on");const rp=el.querySelector(".at-rpe");rp.hidden=true;rp.querySelectorAll("button").forEach(b=>b.classList.remove("on"));el.querySelector("[data-tg]").setAttribute("aria-pressed","false")});upd()};
+    const close=()=>{commit();closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
+    q("#atOk").onclick=close;q("#atX").onclick=close;
+    bg.addEventListener("click",ev=>{if(ev.target===bg){commit();setTimeout(()=>{const y=window.scrollY;anim="";render();window.scrollTo(0,y)},260)}},true);
+  });
+}
 function pname(id){const p=S.players.find(p=>p.id===id);return p?p.name:"Giocatore rimosso"}
 
 const ICON={
 squadra:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5L12 3.5l8.5 7"/><path d="M5.5 9v11h13V9"/><path d="M10 20v-5.5h4V20"/></svg>',
 partite:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M12 5v14"/><circle cx="12" cy="12" r="2.6"/><path d="M2.5 9.5h2.5v5H2.5M21.5 9.5H19v5h2.5"/></svg>',
+allenamenti:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7.5 15.5h-15z"/><path d="M8 12.2h8M6.3 15.8h11.4"/></svg>',
 rosa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3h8l5 3-2 4-2-1v12H7V9l-2 1-2-4z"/></svg>',
 tattica:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3" width="17" height="18" rx="2.5"/><path d="M7.5 7.5l3 3M10.5 7.5l-3 3"/><circle cx="15.5" cy="15.5" r="2"/><path d="M9 16c1.5-2 3-3 4.5-3.2" stroke-dasharray="1.5 2"/></svg>'};
 
 function render(){
   const app=$("#app");
   const sub=`${esc(S.categoria)} · Stagione ${esc(S.stagione)}`;
-  let body = tab==="squadra"?vSquadra():tab==="partite"?vPartite():tab==="rosa"?vRosa():vTattica();
+  let body = tab==="squadra"?vSquadra():tab==="partite"?vPartite():tab==="allenamenti"?vAllen():tab==="rosa"?vRosa():vTattica();
   const hdr=`<header class="top"><div class="wrap">
     <img class="crest" src="${LOGO}" alt="">
     <div class="brand"><h1>Alta Brianza Calcio</h1><p>${sub}</p></div>
@@ -157,7 +233,7 @@ function render(){
   </main>
   ${dirty&&saveFailed?`<div class="savebar"><div class="in">Modifiche non salvate <button class="btn bib small" id="save" ${saving?"disabled":""}>${saving?'<span class="spin" aria-hidden="true"></span>':""}Salva</button></div></div>`:""}
   <nav class="tabbar" aria-label="Sezioni"><div class="in"><span class="glass" id="glass" aria-hidden="true"></span>
-    ${["squadra","partite","rosa","tattica"].map(t=>`<button data-tab="${t}" ${t===tab?'aria-current="page"':""}>${ICON[t]}${t==="squadra"?"Home":t==="partite"?"Partite":t==="rosa"?"Rosa":"Tattica"}</button>`).join("")}
+    ${ORDER.map(t=>`<button data-tab="${t}" ${t===tab?'aria-current="page"':""}>${ICON[t]}${{squadra:"Home",partite:"Partite",allenamenti:"Allenam.",rosa:"Rosa",tattica:"Tattica"}[t]}</button>`).join("")}
   </div></nav>`;
   /* l'intestazione resta ferma: si ridisegna solo se cambia (niente sfarfallio di logo e scritta) */
   const H=app.querySelector("header.top");
@@ -509,6 +585,7 @@ function vRosa(){
           <div class="rep-pos"><small>Posizioni in campo ${canEdit?`<button class="rep-ed" data-edit-pl="${p.id}">Modifica</button>`:""}</small><div class="pchips">${posChips(p)}</div>
             ${(p.pos2||[]).length?'<span class="pleg"><i></i>principale <i class="d"></i>alternativa</span>':""}</div>
         </div>
+        ${(()=>{const a=playerAtt(p.id);return a.tot?`<div class="rep-att"><div><small>Presenze allenamenti</small><b>${a.pres}<i>/${a.tot}</i> <em>${Math.round(a.pres/a.tot*100)}%</em></b></div><div><small>RPE medio</small><b style="color:${RPEC(a.rpe==null?null:Math.round(a.rpe))}">${a.rpe==null?"–":a.rpe.toFixed(1)}</b></div></div>`:""})()}
         <div class="rep-goals"><div class="rg-h"><small>Gol stagione</small><b>${g[p.id]||0}</b></div>
           ${ms.length?`<div class="rg-list">${ms.map(e=>{const d=pd(e.date);return `<div><span>${crestImg(e.opponent,false,"sm")}vs ${esc(e.opponent)}</span><span class="rg-d">${d.getDate()} ${MESI[d.getMonth()].slice(0,3)}</span><b>${e.scorers[p.id]}</b></div>`}).join("")}</div>`:'<div class="ev-sub">Ancora nessun gol in partita.</div>'}
         </div>
@@ -956,6 +1033,7 @@ function bind(){
   document.querySelectorAll('[data-add="player"]').forEach(b=>b.onclick=()=>editPlayer(null));
   const es=$("#editSt");if(es)es.onclick=editStandings;
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>goTab(b.dataset.go));
+  document.querySelectorAll("[data-att]").forEach(b=>b.onclick=()=>openAtt(b.dataset.att));
   document.querySelectorAll("[data-match]").forEach(el=>el.onclick=()=>openMatch(el.dataset.match,el));
   document.querySelectorAll("[data-open]").forEach(el=>{el.onclick=()=>openEvent(el.dataset.open,el);el.onkeydown=k=>{if(k.key==="Enter"||k.key===" "){k.preventDefault();openEvent(el.dataset.open,el)}}});
   bindTattica();
