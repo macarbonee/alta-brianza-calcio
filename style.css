@@ -1177,3 +1177,15 @@ html.pinbar .tabbar{bottom:auto!important;top:var(--tb-top)!important}
 .ar-st b i{font-style:normal;font-size:11px;font-weight:700;opacity:.7}
 .ar-st small{font:700 9px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .ar-tag.todo{background:color-mix(in srgb,var(--bib) 25%,transparent);color:var(--ink)}
+
+/* tendina RPE fluida */
+.at-rw{display:grid;grid-template-rows:0fr;transition:grid-template-rows .42s cubic-bezier(.22,1,.36,1)}
+.at-row.open .at-rw{grid-template-rows:1fr}
+.at-rw > .at-rpe{min-height:0;overflow:hidden;padding-top:0;padding-bottom:0;transition:padding .42s cubic-bezier(.22,1,.36,1)}
+.at-row.open .at-rw > .at-rpe{padding-top:2px;padding-bottom:13px}
+.at-rw .at-rpe button{opacity:0;transform:translateY(-6px) scale(.7);transition:opacity .22s ease,transform .3s cubic-bezier(.3,1.3,.5,1),background .2s,color .2s}
+.at-row.open .at-rw .at-rpe button{opacity:1;transform:none;transition-delay:calc(var(--i) * 22ms),calc(var(--i) * 22ms),0s,0s}
+.at-row.open .at-rw .at-rpe button.on{transform:scale(1.12)}
+.at-fly{position:fixed;z-index:200;display:grid;place-items:center;border-radius:50%;color:#fff;font:800 15px var(--f-ui);pointer-events:none;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--c) 75%,#fff),var(--c));box-shadow:0 8px 20px color-mix(in srgb,var(--c) 50%,transparent);will-change:transform}
+@media (prefers-reduced-motion: reduce){.at-rw,.at-rw > .at-rpe,.at-rw .at-rpe button{transition:none}}

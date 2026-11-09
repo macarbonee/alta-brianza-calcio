@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794247091";
+const APP_V="1794247301";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -211,7 +211,7 @@ function openAtt(id){
     return `<div class="at-row ${r.in?"on":""}" data-pr="${p.id}" style="--rc:${RCOL[p.role]};--sc:${r.in?(r.rpe!=null?RPEC(r.rpe):"var(--win)"):"var(--loss)"}">
       <div class="at-line"><button class="at-ck" data-tg="${p.id}" ${canEdit?"":"disabled"} aria-pressed="${!!r.in}" aria-label="Presente"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
         <button class="at-who" data-op="${p.id}" ${canEdit?"":"disabled"}><span class="at-nm">${nameHTML(p.name)}</span>${badge(r)}</button></div>
-      <div class="at-rpe" hidden>${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button data-rp="${p.id}:${v}" class="${r.rpe===v?"on":""}" style="--c:${RPEC(v)}" aria-label="RPE ${v}">${v}</button>`).join("")}</div>
+      <div class="at-rw"><div class="at-rpe">${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button data-rp="${p.id}:${v}" class="${r.rpe===v?"on":""}" style="--c:${RPEC(v)};--i:${v-1}" tabindex="-1" aria-label="RPE ${v}">${v}</button>`).join("")}</div></div>
     </div>`};
   sheet(`<button class="sheet-x" id="atX" aria-label="Chiudi">×</button>
     <h3>Allenamento · ${GG[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</h3>
@@ -223,12 +223,20 @@ function openAtt(id){
     const q=x=>bg.querySelector(x);
     const upd=()=>{q("#atHead").innerHTML=head()};
     const red=reducedM();
-    const setBadge=id=>{const rw=work[id]||{};const el0=bg.querySelector(`[data-pr="${id}"]`);if(el0)el0.style.setProperty("--sc",rw.in?(rw.rpe!=null?RPEC(rw.rpe):"var(--win)"):"var(--loss)");const b=bg.querySelector(`[data-op="${id}"] .at-rb`);const t=document.createElement("span");t.innerHTML=badge(work[id]);const nb=t.firstChild;b.replaceWith(nb);
-      if(!red&&nb.animate)nb.animate([{transform:"scale(.4)",opacity:0},{transform:"scale(1.18)",opacity:1,offset:.6},{transform:"scale(1)"}],{duration:380,easing:"cubic-bezier(.3,1.3,.5,1)"})};
-    const fold=(id,open)=>{const el=bg.querySelector(`[data-pr="${id}"]`);if(!el)return;const rp=el.querySelector(".at-rpe");
-      if(open){rp.hidden=false;el.classList.add("open");if(!red&&rp.animate)rp.animate([{opacity:0,maxHeight:"0px",paddingBottom:"0px"},{opacity:1,maxHeight:"60px",paddingBottom:"11px"}],{duration:280,easing:"cubic-bezier(.22,1,.36,1)"})}
-      else{el.classList.remove("open");if(red||!rp.animate){rp.hidden=true;return}
-        rp.animate([{opacity:1,maxHeight:rp.offsetHeight+"px",paddingBottom:"11px"},{opacity:0,maxHeight:"0px",paddingBottom:"0px"}],{duration:240,easing:"cubic-bezier(.4,0,.2,1)"}).onfinish=()=>{if(!el.classList.contains("open"))rp.hidden=true}}};
+    const setBadge=(id,pop=true)=>{const rw=work[id]||{};const el0=bg.querySelector(`[data-pr="${id}"]`);if(el0)el0.style.setProperty("--sc",rw.in?(rw.rpe!=null?RPEC(rw.rpe):"var(--win)"):"var(--loss)");const b=bg.querySelector(`[data-op="${id}"] .at-rb`);const t=document.createElement("span");t.innerHTML=badge(work[id]);const nb=t.firstChild;b.replaceWith(nb);
+      if(pop&&!red&&nb.animate)nb.animate([{transform:"scale(.6)",opacity:0},{transform:"scale(1.08)",opacity:1,offset:.6},{transform:"scale(1)"}],{duration:420,easing:"cubic-bezier(.22,1,.36,1)"});return nb};
+    /* la tendina dei numeri si apre e chiude con una transizione CSS (fluida anche su iPhone) */
+    const fold=(id,open)=>{const el=bg.querySelector(`[data-pr="${id}"]`);if(!el)return;el.classList.toggle("open",open);
+      el.querySelectorAll(".at-rpe button").forEach(b=>b.tabIndex=open?0:-1)};
+    /* il numero scelto "vola" nel riquadro RPE accanto al nome */
+    const fly=(btn,id)=>{const el=bg.querySelector(`[data-pr="${id}"]`);const old=el.querySelector(".at-rb");
+      if(red||!btn.animate){setBadge(id,false);return}
+      const a=btn.getBoundingClientRect();const nb=setBadge(id,false);const z=nb.getBoundingClientRect();nb.style.opacity="0";
+      const g=document.createElement("span");g.className="at-fly";g.textContent=btn.textContent;g.style.cssText=`left:${a.left}px;top:${a.top}px;width:${a.width}px;height:${a.height}px;--c:${getComputedStyle(btn).getPropertyValue("--c")}`;
+      document.body.appendChild(g);
+      const dx=z.left+z.width/2-(a.left+a.width/2),dy=z.top+z.height/2-(a.top+a.height/2);
+      g.animate([{transform:"translate(0,0) scale(1.12)"},{transform:`translate(${dx*0.55}px,${dy*0.55-18}px) scale(1.25)`,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(${z.height/a.height})`,borderRadius:"12px"}],{duration:480,easing:"cubic-bezier(.45,0,.2,1)",fill:"forwards"}).onfinish=()=>{g.remove();nb.style.opacity="";
+        nb.animate([{transform:"scale(1.12)"},{transform:"scale(1)"}],{duration:260,easing:"cubic-bezier(.22,1,.36,1)"})}};
     const commit=()=>{if(!changed)return;e.att=JSON.parse(JSON.stringify(work));dirty=true;changed=false};
     bg.addEventListener("click",ev=>{if(!canEdit)return;
       const t=ev.target.closest("[data-tg]"),o=ev.target.closest("[data-op]"),r=ev.target.closest("[data-rp]");
@@ -241,8 +249,7 @@ function openAtt(id){
         if(openP)fold(openP,false);openP=id;fold(id,true);return}
       if(r){const [id,v]=r.dataset.rp.split(":");const n=+v;const cur=work[id]||{in:true};cur.in=true;cur.rpe=n;work[id]=cur;changed=true;
         r.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===r));
-        if(!red&&r.animate)r.animate([{transform:"scale(.85)"},{transform:"scale(1.15)"},{transform:"scale(1)"}],{duration:220,easing:"cubic-bezier(.3,1.4,.5,1)"});
-        setTimeout(()=>{fold(id,false);if(openP===id)openP=null;setBadge(id)},170);upd();commit();autosave();return}
+        fly(r,id);setTimeout(()=>{fold(id,false);if(openP===id)openP=null},140);upd();commit();autosave();return}
     });
     const close=()=>{commit();closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
     q("#atOk").onclick=close;q("#atX").onclick=close;
