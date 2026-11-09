@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794241317";
+const APP_V="1794242250";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -1167,4 +1167,18 @@ function veilOff(){const v=document.getElementById("bgveil");if(!v)return;v.styl
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")veilOn();else setTimeout(veilOff,60)});
 addEventListener("pagehide",veilOn);
 addEventListener("pageshow",()=>setTimeout(veilOff,60));
+/* app installata: la barra delle sezioni resta inchiodata al fondo dello schermo, anche mentre si scorre
+   (su iPhone il bordo in basso "respira" durante lo scorrimento e la trascinava su) */
+const pinBar=(()=>{if(!IS_APP)return ()=>{};
+  const pr=document.createElement("div");pr.style.cssText="position:fixed;left:0;bottom:0;width:1px;height:1px;visibility:hidden;padding-bottom:env(safe-area-inset-bottom,0px);pointer-events:none";
+  document.body.appendChild(pr);let sab=parseFloat(getComputedStyle(pr).paddingBottom)||0;
+  return ()=>{const portrait=innerHeight>=innerWidth;const root=document.documentElement;
+    if(!portrait){root.classList.remove("pinbar");return}
+    const tb=document.querySelector(".tabbar");if(!tb)return;
+    const now=parseFloat(getComputedStyle(pr).paddingBottom)||0;if(now>sab)sab=now; /* il valore più grande è quello vero */
+    const fh=Math.max(innerHeight,screen.height),gap=Math.max(6,sab-14);
+    root.style.setProperty("--tb-top",(fh-gap-tb.offsetHeight)+"px");root.classList.add("pinbar")}})();
+const _render=render;render=function(){_render();pinBar()};
+addEventListener("resize",()=>pinBar());addEventListener("orientationchange",()=>setTimeout(pinBar,300));
+pinBar();
 })();
