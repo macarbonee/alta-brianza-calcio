@@ -133,12 +133,12 @@ function render(){
   const app=$("#app");
   const sub=`${esc(S.categoria)} · Stagione ${esc(S.stagione)}`;
   let body = tab==="squadra"?vSquadra():tab==="partite"?vPartite():tab==="rosa"?vRosa():vTattica();
-  app.innerHTML=`
-  <header class="top"><div class="wrap">
+  const hdr=`<header class="top"><div class="wrap">
     <img class="crest" src="${LOGO}" alt="">
     <div class="brand"><h1>Alta Brianza Calcio</h1><p>${sub}</p></div>
     ${ABD_ME?`<button class="prof" id="profBtn" aria-label="Profilo di ${esc(ABD_ME.first)} ${esc(ABD_ME.last)}" aria-haspopup="true"><span>${esc(ABD_ME.first[0])}${esc(ABD_ME.last[0])}</span></button>`:""}
-  </div></header>
+  </div></header>`;
+  const rest=`
   <main class="wrap ${anim}">
     ${body}
   </main>
@@ -146,6 +146,10 @@ function render(){
   <nav class="tabbar" aria-label="Sezioni"><div class="in"><span class="glass" id="glass" aria-hidden="true"></span>
     ${["squadra","partite","rosa","tattica"].map(t=>`<button data-tab="${t}" ${t===tab?'aria-current="page"':""}>${ICON[t]}${t==="squadra"?"Home":t==="partite"?"Partite":t==="rosa"?"Rosa":"Tattica"}</button>`).join("")}
   </div></nav>`;
+  /* l'intestazione resta ferma: si ridisegna solo se cambia (niente sfarfallio di logo e scritta) */
+  const H=app.querySelector("header.top");
+  if(H&&app._hdr===hdr){while(H.nextSibling)H.nextSibling.remove();H.insertAdjacentHTML("afterend",rest)}
+  else{app.innerHTML=hdr+rest;app._hdr=hdr}
   bind();
   placeGlass(pillFromX);pillFromX=null;bindGlass();
   anim="";calAnim="";dayAnim=false;
