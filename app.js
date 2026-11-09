@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794235843";
+const APP_V="1794237598";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -969,6 +969,9 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;dropBoot(false);return}
   /* lo stesso stemma dell'avvio passa nell'intro, già caricato: nessun buco */
   let hold=document.getElementById("bootlogo");
   if(hold){hold.removeAttribute("style");hold.removeAttribute("id")}else{hold=document.createElement("img");hold.src=LOGO;hold.alt=""}
+  /* sopra i triangoli animati resta per un attimo l'immagine d'avvio identica, poi sfuma piano */
+  const li=window.ABTRI&&ABTRI.launchImg&&ABTRI.launchImg();let still=null;
+  if(li){still=document.createElement("div");still.className="sp-still";still.style.backgroundImage=`url(${li})`;sp.insertBefore(still,sp.querySelector(".sp-row"))}
   hold.className="sp-hold";sp.appendChild(hold);
   dropBoot(false);
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1035,8 +1038,8 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;dropBoot(false);return}
   let fl;try{fl=document.fonts&&document.fonts.load?document.fonts.load('700 40px "Antonio"').catch(()=>{}):null}catch(_){fl=null}
   const fontReady=Promise.race([fl||Promise.resolve(),new Promise(r=>setTimeout(r,700))]);
   const safety=setTimeout(()=>gate(),4500); /* in ogni caso l'intro si chiude */
-  const showFinal=()=>{hold.remove();[wrap,t1,t2,line].forEach(el=>{el.style.opacity=1;el.style.transform="none"})};
-  if(reduced||!sp.animate){hold.remove();
+  const showFinal=()=>{hold.remove();if(still)still.remove();[wrap,t1,t2,line].forEach(el=>{el.style.opacity=1;el.style.transform="none"})};
+  if(reduced||!sp.animate){hold.remove();if(still)still.remove();
     [wrap,t1,t2,line].forEach(el=>{el.style.opacity=1;el.style.transform="none"});
     setTimeout(gate,1600);return;
   }
@@ -1052,6 +1055,7 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;dropBoot(false);return}
       {opacity:1,transform:"translateX(0px) scale(1)"}],
       {duration:1550,fill:"forwards"});
     hold.remove();
+    if(still){const st=still;st.animate([{opacity:1},{opacity:0}],{duration:900,easing:"ease-in-out",fill:"forwards"}).onfinish=()=>st.remove()}
     sheen.animate([{backgroundPosition:"-150% 0"},{backgroundPosition:"250% 0"}],{duration:900,delay:120,easing:"ease-in-out",fill:"both"});
     line.animate([{opacity:0,transform:"scaleY(0)"},{opacity:1,transform:"scaleY(1)"}],{duration:650,delay:760,easing:E,fill:"forwards"});
     [t1,t2].forEach((el,i)=>el.animate([

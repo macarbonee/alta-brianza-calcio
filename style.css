@@ -561,6 +561,7 @@ main{padding-bottom:110px}
 .sp-line{width:3px;height:calc(var(--lh) * .82);background:#ffffff;border-radius:2px;margin:0 clamp(11px,3.5vw,18px);flex:none;transform:scaleY(0);opacity:0;box-shadow:0 0 12px rgba(255,255,255,.5)}
 .sp-text{font-family:var(--f-display);font-weight:700;color:#ffffff;text-transform:uppercase;font-size:calc(var(--lh) * .38);line-height:1.04;letter-spacing:-.005em;white-space:nowrap;text-shadow:0 6px 18px rgba(0,0,0,.3)}
 .sp-text span{display:block;opacity:0}
+.sp-still{position:absolute;inset:0;z-index:1;background:center/100% 100% no-repeat;pointer-events:none}
 .sp-hold{position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);height:var(--lh);width:auto;max-width:none;filter:drop-shadow(0 14px 28px rgba(0,0,0,.4));pointer-events:none}
 .sp-row{transition:transform .55s cubic-bezier(.22,1,.36,1)}
 .splash.login-open .sp-row{transform:translateY(calc(-50vh + 64px + env(safe-area-inset-top,0px) + var(--lh) * .25)) scale(.5)}
