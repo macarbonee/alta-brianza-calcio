@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794237986";
+const APP_V="1794238287";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -959,7 +959,7 @@ if(RESUME){window.scrollTo(0,RESUME.y||0);if(RESUME.mOpen)openMatch(RESUME.mOpen
   if(RESUME.back){const row=document.querySelector(`#app [data-match="${RESUME.back}"]`);if(row)row.classList.add("returned")}}
 function dropBoot(slow){const b=document.getElementById("boot");if(!b)return;if(!slow){b.remove();return}
   b.style.transition="opacity .35s ease";requestAnimationFrame(()=>{b.style.opacity="0"});setTimeout(()=>b.remove(),400)}
-function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";render();dropBoot(true);return}
+function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";document.body.classList.add("ready");render();dropBoot(true);return}
   const sp=document.createElement("div");sp.className="splash";if(ABD_ME)sp.setAttribute("aria-hidden","true");
   sp.innerHTML=`<canvas></canvas><div class="sp-row"><div class="sp-logo-wrap"><img class="sp-logo" src="${LOGO}" alt=""><div class="sp-sheen" style="--m:url('${LOGO}')"></div></div><div class="sp-side"><div class="sp-line"></div><div class="sp-text"><span>Alta</span><span>Brianza</span></div></div></div>`;
   document.body.appendChild(sp);
@@ -973,7 +973,7 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";render();dropB
   const li=window.ABTRI&&ABTRI.launchImg&&ABTRI.launchImg();let still=null;
   if(li){still=document.createElement("div");still.className="sp-still";still.style.backgroundImage=`url(${li})`;sp.insertBefore(still,sp.querySelector(".sp-row"))}
   hold.className="sp-hold";sp.appendChild(hold);
-  dropBoot(false);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>dropBoot(false))); /* via solo quando l'intro è già a schermo */
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
   const q=s=>sp.querySelector(s);
   const row=q(".sp-row"),wrap=q(".sp-logo-wrap"),line=q(".sp-line"),[t1,t2]=sp.querySelectorAll(".sp-text span"),sheen=q(".sp-sheen");
@@ -989,7 +989,7 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";render();dropB
   let t0set=false;build();draw(performance.now());addEventListener("resize",()=>{if(alive){build();if(reduced)draw(performance.now())}});
 
   let done=false;
-  const hide=()=>{if(done)return;done=true;clearTimeout(safety);anim="a-open";render();setTimeout(()=>{if(anim==="a-open")anim=""},1400);
+  const hide=()=>{if(done)return;done=true;clearTimeout(safety);anim="a-open";document.body.classList.add("ready");render();setTimeout(()=>{if(anim==="a-open")anim=""},1400);
     const end=()=>{alive=false;cancelAnimationFrame(raf);sp.remove()};
     if(reduced||!sp.animate){end();return}
     row.animate([{transform:getComputedStyle(row).transform==="none"?"none":getComputedStyle(row).transform,opacity:1,filter:"blur(0)"},{transform:"scale(1.08)",opacity:0,filter:"blur(6px)"}],{duration:550,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"});
