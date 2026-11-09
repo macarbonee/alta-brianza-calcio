@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794234207";
+const APP_V="1794234389";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -957,10 +957,12 @@ if(RESUME){if(RESUME.tMatch)tMatch=RESUME.tMatch;if(RESUME.tPer)tPer=RESUME.tPer
 render();
 if(RESUME){window.scrollTo(0,RESUME.y||0);if(RESUME.mOpen)openMatch(RESUME.mOpen,null);
   if(RESUME.back){const row=document.querySelector(`#app [data-match="${RESUME.back}"]`);if(row)row.classList.add("returned")}}
-function runSplash(){if(RESUME&&ABD_ME){RESUME=null;return}
+function dropBoot(slow){const b=document.getElementById("boot");if(!b)return;if(!slow){b.remove();return}
+  b.style.transition="opacity .35s ease";requestAnimationFrame(()=>{b.style.opacity="0"});setTimeout(()=>b.remove(),400)}
+function runSplash(){if(RESUME&&ABD_ME){RESUME=null;dropBoot(false);return}
   const sp=document.createElement("div");sp.className="splash";if(ABD_ME)sp.setAttribute("aria-hidden","true");
   sp.innerHTML=`<canvas></canvas><div class="sp-row"><div class="sp-logo-wrap"><img class="sp-logo" src="${LOGO}" alt=""><div class="sp-sheen" style="--m:url('${LOGO}')"></div></div><div class="sp-side"><div class="sp-line"></div><div class="sp-text"><span>Alta</span><span>Brianza</span></div></div></div>`;
-  document.body.appendChild(sp);
+  document.body.appendChild(sp);dropBoot(true);
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
   const q=s=>sp.querySelector(s);
   const row=q(".sp-row"),wrap=q(".sp-logo-wrap"),line=q(".sp-line"),[t1,t2]=sp.querySelectorAll(".sp-text span"),sheen=q(".sp-sheen");
