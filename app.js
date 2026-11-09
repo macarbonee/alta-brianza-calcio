@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794237598";
+const APP_V="1794237794";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -959,7 +959,7 @@ if(RESUME){window.scrollTo(0,RESUME.y||0);if(RESUME.mOpen)openMatch(RESUME.mOpen
   if(RESUME.back){const row=document.querySelector(`#app [data-match="${RESUME.back}"]`);if(row)row.classList.add("returned")}}
 function dropBoot(slow){const b=document.getElementById("boot");if(!b)return;if(!slow){b.remove();return}
   b.style.transition="opacity .35s ease";requestAnimationFrame(()=>{b.style.opacity="0"});setTimeout(()=>b.remove(),400)}
-function runSplash(){if(RESUME&&ABD_ME){RESUME=null;dropBoot(false);return}
+function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";render();dropBoot(true);return}
   const sp=document.createElement("div");sp.className="splash";if(ABD_ME)sp.setAttribute("aria-hidden","true");
   sp.innerHTML=`<canvas></canvas><div class="sp-row"><div class="sp-logo-wrap"><img class="sp-logo" src="${LOGO}" alt=""><div class="sp-sheen" style="--m:url('${LOGO}')"></div></div><div class="sp-side"><div class="sp-line"></div><div class="sp-text"><span>Alta</span><span>Brianza</span></div></div></div>`;
   document.body.appendChild(sp);
@@ -1093,8 +1093,12 @@ async function checkUpdate(){
   try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const j=await r.json();
     let tried=null;try{tried=localStorage.getItem("ab-upd-try")}catch(_){}
     if(j.v&&j.v!==APP_V&&tried!==j.v){try{localStorage.setItem("ab-upd-try",j.v)}catch(_){}
-      const go=()=>{const rl=()=>{try{sessionStorage.setItem("ab-upd",JSON.stringify({t:Date.now(),tab,y:window.scrollY}))}catch(_){}location.reload()};if(dirty&&!saving&&MYID){save().finally(rl)}else rl()};
-      if(idleUI()&&!document.querySelector(".splash"))go();else{const t=setInterval(()=>{if(idleUI()){clearInterval(t);go()}},1500)}}
+      const go=()=>{const rl=()=>{try{sessionStorage.setItem("ab-upd",JSON.stringify({t:Date.now(),tab,y:window.scrollY}))}catch(_){}
+        /* velo uguale alla schermata d'avvio: l'aggiornamento si vede come una breve dissolvenza, non come un salto */
+        const v=document.createElement("div");const li=window.ABTRI&&ABTRI.launchImg&&ABTRI.launchImg();
+        v.style.cssText="position:fixed;inset:0;z-index:90;opacity:0;transition:opacity .22s ease;background:#0b1854 "+(li?`url(${li}) center/100% 100% no-repeat`:"");
+        document.body.appendChild(v);requestAnimationFrame(()=>{v.style.opacity="1"});setTimeout(()=>location.reload(),260)};if(dirty&&!saving&&MYID){save().finally(rl)}else rl()};
+      const ok=()=>idleUI()&&!document.querySelector(".splash");if(ok())go();else{const t=setInterval(()=>{if(ok()){clearInterval(t);go()}},1500)}}
   }catch(_){}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
 setTimeout(checkUpdate,6000);
