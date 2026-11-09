@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794243815";
+const APP_V="1794243957";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -57,7 +57,11 @@ function idleUI(){const a=document.activeElement;return !dirty&&!saving&&!docume
 async function loadData(force){
   if(!SB||!MYID)return;
   const {data,error}=await SB.from("app_state").select("data,updated_at").eq("id","main").maybeSingle();
-  if(error)throw error;if(data)applyRemote(data,force)}
+  if(error)throw error;if(data)applyRemote(data,force);runFixes()}
+/* correzioni una tantum sui dati condivisi */
+function runFixes(){if(!canEdit||isPending()||dirty)return;
+  if(!S.fix10nov){const t=S.events.find(e=>e.type!=="partita"&&e.date==="2026-11-10");if(t)delete t.att;S.fix10nov=1;dirty=true;
+    if(!document.querySelector(".splash")){const y=window.scrollY;anim="";render();window.scrollTo(0,y)}save()}}
 function applyRemote(row,force){
   if(!row||!row.data)return;
   if(isPending())return; /* prima si inviano le modifiche fatte offline */
@@ -190,7 +194,7 @@ function openAtt(id){
     <div id="atHead">${head()}</div>
     <div class="at-list">${S.players.slice().sort(srt).map(row).join("")}</div>
     <p class="at-leg"><b>RPE</b> 1 riposo · 3 facile · 5 un po' duro · 7 molto duro · 10 massimo</p>
-    <div class="sheet-actions"><span></span><button class="btn primary" id="atOk">Fatto</button></div>`,bg=>{
+    <div class="sheet-actions">${canEdit&&!fresh?'<button class="btn" id="atReset">Ripristina</button>':"<span></span>"}<button class="btn primary" id="atOk">Fatto</button></div>`,bg=>{
     const q=x=>bg.querySelector(x);
     const upd=()=>{q("#atHead").innerHTML=head()};
     const red=reducedM();
@@ -217,6 +221,8 @@ function openAtt(id){
     });
     const close=()=>{commit();closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
     q("#atOk").onclick=close;q("#atX").onclick=close;
+    const rs=q("#atReset");if(rs)rs.onclick=()=>{if(!rs.classList.contains("confirm")){rs.classList.add("confirm");rs.textContent="Tocca di nuovo per ripristinare";setTimeout(()=>{rs.classList.remove("confirm");rs.textContent="Ripristina"},3000);return}
+      delete e.att;dirty=true;changed=false;closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
     bg.addEventListener("click",ev=>{if(ev.target===bg){commit();setTimeout(()=>{const y=window.scrollY;anim="";render();window.scrollTo(0,y)},260)}},true);
   });
 }
