@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794243634";
+const APP_V="1794243815";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -138,17 +138,19 @@ function monthList(arr,emptyHTML){
 const RPEC=v=>v==null?"var(--muted)":`hsl(${Math.round(130-(v-1)*13.3)} 70% ${v>=8?46:42}%)`;
 const RPEL=["","Riposo","Molto facile","Facile","Moderato","Un po' duro","Duro","Molto duro","Durissimo","Quasi al massimo","Massimo"];
 function attOf(e){return e.att||{}}
-function attStats(e){const a=attOf(e),ids=S.players.map(p=>p.id),pres=ids.filter(id=>a[id]&&a[id].in),rp=pres.map(id=>a[id].rpe).filter(v=>v!=null);
-  return {done:Object.keys(a).length>0,pres:pres.length,tot:ids.length,rpe:rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null,nrpe:rp.length}}
-function playerAtt(pid){let tot=0,pres=0,sum=0,n=0;S.events.filter(e=>e.type!=="partita"&&e.att&&Object.keys(e.att).length).forEach(e=>{tot++;const r=e.att[pid];if(r&&r.in){pres++;if(r.rpe!=null){sum+=r.rpe;n++}}});
+/* di default tutti presenti: si toglie la spunta solo a chi manca */
+function attRec(e,pid){const a=e.att;if(!a||!Object.keys(a).length)return {in:true,rpe:null};return a[pid]||{in:true,rpe:null}}
+function attStats(e){const ids=S.players.map(p=>p.id),recs=ids.map(id=>attRec(e,id)),pres=recs.filter(r=>r.in),rp=pres.map(r=>r.rpe).filter(v=>v!=null);
+  return {done:trDone(e),pres:pres.length,tot:ids.length,rpe:rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null,nrpe:rp.length}}
+function playerAtt(pid){let tot=0,pres=0,sum=0,n=0;S.events.filter(e=>e.type!=="partita"&&trDone(e)).forEach(e=>{tot++;const r=attRec(e,pid);if(r.in){pres++;if(r.rpe!=null){sum+=r.rpe;n++}}});
   return {tot,pres,rpe:n?sum/n:null}}
 function trDone(e){const nowT=new Date().toTimeString().slice(0,5);return e.date<todayISO||(e.date===todayISO&&(e.end||e.time)<=nowT)}
 const CLK='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 function allRow(e){const d=pd(e.date),st=attStats(e),fut=!trDone(e),pct=st.tot?st.pres/st.tot:0,R=15,C=2*Math.PI*R;
-  return `<button class="arow ${fut?"fut":""} ${st.done?"ok":fut?"":"todo"}" data-att="${e.id}">
-    <span class="ar-d"><small>${GG[d.getDay()]}</small><b>${d.getDate()}</b><em>${MESI[d.getMonth()].slice(0,3)}</em>${st.done?'<i class="ar-ok" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>':""}</span>
+  return `<button class="arow ${fut?"fut":""} ${st.done&&st.nrpe?"ok":st.done?"todo":""}" data-att="${e.id}">
+    <span class="ar-d"><small>${GG[d.getDay()]}</small><b>${d.getDate()}</b><em>${MESI[d.getMonth()].slice(0,3)}</em>${st.done&&st.nrpe?'<i class="ar-ok" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>':""}</span>
     <span class="ar-m"><b>Allenamento</b><small>${CLK}${esc(e.time)}${e.end?"–"+esc(e.end):""}${e.place?" · "+esc(e.place):""}</small>
-      ${st.done?`<span class="ar-rp" style="--c:${RPEC(st.rpe==null?null:Math.round(st.rpe))}">${st.rpe==null?"RPE non inserito":`RPE medio <b>${st.rpe.toFixed(1)}</b>`}</span>`:`<span class="ar-tag">${fut?"In programma":"Da compilare"}</span>`}</span>
+      ${st.done?`<span class="ar-rp" style="--c:${RPEC(st.rpe==null?null:Math.round(st.rpe))}">${st.rpe==null?"RPE da inserire":`RPE medio <b>${st.rpe.toFixed(1)}</b>`}</span>`:`<span class="ar-tag">In programma</span>`}</span>
     ${st.done?`<span class="ar-ring" aria-label="${st.pres} presenti su ${st.tot}"><svg viewBox="0 0 40 40" width="50" height="50"><circle cx="20" cy="20" r="${R}" class="rg-bg"/><circle cx="20" cy="20" r="${R}" class="rg-fg" stroke-dasharray="${(C*pct).toFixed(1)} ${C.toFixed(1)}"/></svg><span><b>${st.pres}</b><i>/${st.tot}</i></span></span>`
       :`<span class="ar-go" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>`}
   </button>`}
@@ -169,8 +171,8 @@ function vAllen(){
 function openAtt(id){
   const e=S.events.find(x=>x.id===id);if(!e)return;
   const fresh=!e.att||!Object.keys(e.att).length;
-  const work=fresh?Object.fromEntries(S.players.map(p=>[p.id,{in:true,rpe:null}])):JSON.parse(JSON.stringify(e.att));
-  let changed=fresh&&trDone(e), openP=null;
+  const work=Object.fromEntries(S.players.map(p=>[p.id,{...attRec(e,p.id)}]));
+  let changed=false, openP=null;
   const srt=(a,b)=>ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||a.num-b.num;
   const d=pd(e.date);
   const head=()=>{const ids=S.players.map(p=>p.id),pres=ids.filter(i=>work[i]&&work[i].in),rp=pres.map(i=>work[i].rpe).filter(v=>v!=null),m=rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null;
@@ -184,7 +186,7 @@ function openAtt(id){
     </div>`};
   sheet(`<button class="sheet-x" id="atX" aria-label="Chiudi">×</button>
     <h3>Allenamento · ${GG[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</h3>
-    <p class="ev-sub" style="margin:-4px 0 6px">${fresh?"Tutti segnati presenti: togli la spunta a chi mancava. ":""}Tocca un nome per il suo RPE.</p>
+    <p class="ev-sub" style="margin:-4px 0 6px">Tutti presenti di default: togli la spunta a chi mancava. Tocca un nome per il suo RPE.</p>
     <div id="atHead">${head()}</div>
     <div class="at-list">${S.players.slice().sort(srt).map(row).join("")}</div>
     <p class="at-leg"><b>RPE</b> 1 riposo · 3 facile · 5 un po' duro · 7 molto duro · 10 massimo</p>
