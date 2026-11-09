@@ -961,7 +961,7 @@ section > h2 > .hist{margin-left:auto;display:flex;gap:6px}
 /* app installata (schermata Home): intestazione più in basso, colore che sale fin sotto l'orologio; barra schede più in basso */
 @media (display-mode: standalone){
   body::before{background:linear-gradient(120deg,#0b1854,#15297c);height:calc(env(safe-area-inset-top,0px) + 2px)}
-  header.top .wrap{padding-top:30px;padding-bottom:16px}
+  header.top .wrap{padding-top:44px;padding-bottom:16px}
   .tabbar{bottom:max(6px,calc(env(safe-area-inset-bottom,0px) - 14px))}
 }
 
