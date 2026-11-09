@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794234389";
+const APP_V="1794234697";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -962,35 +962,23 @@ function dropBoot(slow){const b=document.getElementById("boot");if(!b)return;if(
 function runSplash(){if(RESUME&&ABD_ME){RESUME=null;dropBoot(false);return}
   const sp=document.createElement("div");sp.className="splash";if(ABD_ME)sp.setAttribute("aria-hidden","true");
   sp.innerHTML=`<canvas></canvas><div class="sp-row"><div class="sp-logo-wrap"><img class="sp-logo" src="${LOGO}" alt=""><div class="sp-sheen" style="--m:url('${LOGO}')"></div></div><div class="sp-side"><div class="sp-line"></div><div class="sp-text"><span>Alta</span><span>Brianza</span></div></div></div>`;
-  document.body.appendChild(sp);dropBoot(true);
+  document.body.appendChild(sp);
+  /* il logo resta fermo al centro, come all'avvio, finché l'animazione è pronta a partire */
+  const hold=document.createElement("img");hold.className="sp-hold";hold.src=LOGO;hold.alt="";sp.appendChild(hold);
+  dropBoot(false);
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
   const q=s=>sp.querySelector(s);
   const row=q(".sp-row"),wrap=q(".sp-logo-wrap"),line=q(".sp-line"),[t1,t2]=sp.querySelectorAll(".sp-text span"),sheen=q(".sp-sheen");
   /* sfondo a triangoli blu che luccicano piano */
   const cv=q("canvas"),cx=cv.getContext("2d");let tris=[],raf=0,t0=performance.now(),alive=true;
   const shades=[[20,48,150],[26,58,170],[16,38,128],[32,70,190],[14,30,110],[24,52,160]];
-  function build(){
-    const dpr=Math.min(2,devicePixelRatio||1),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);
-    const s=Math.max(70,Math.min(W,H)/5),h=s*0.866;tris=[];
-    for(let r=-1;r*h<H+h;r++)for(let c=-1;c*s/2<W+s;c++){
-      const x=c*s/2+(r%2?s/2:0),y=r*h,up=(c+r)%2===0;
-      const p=up?[[x,y+h],[x+s/2,y],[x+s,y+h]]:[[x,y],[x+s,y],[x+s/2,y+h]];
-      const b=shades[(Math.random()*shades.length)|0];
-      tris.push({p,b,ph:Math.random()*6.28,sp:.6+Math.random()*1.2,d:Math.hypot(x-W/2,y-H/2)});
-    }
-  }
+  const T=window.ABTRI;
+  function build(){const z=T.size(cv);tris=T.build(z.W,z.H)}
   function draw(now){
-    const t=(now-t0)/1000;cx.clearRect(0,0,cv.width,cv.height);
-    for(const o of tris){
-      const wave=Math.max(0,1-Math.abs(o.d/420-(t*1.1-0.4)))*0.35; /* onda di luce che parte dal centro */
-      const k=1+0.07*Math.sin(t*o.sp+o.ph)+wave;
-      cx.fillStyle=`rgb(${o.b[0]*k|0},${o.b[1]*k|0},${Math.min(255,o.b[2]*k)|0})`;
-      cx.beginPath();cx.moveTo(o.p[0][0],o.p[0][1]);cx.lineTo(o.p[1][0],o.p[1][1]);cx.lineTo(o.p[2][0],o.p[2][1]);cx.closePath();cx.fill();
-      cx.strokeStyle="rgba(255,255,255,.035)";cx.stroke();
-    }
+    const t=(now-t0)/1000;cx.clearRect(0,0,cv.width,cv.height);T.draw(cx,tris,t);
     if(alive&&!reduced)raf=requestAnimationFrame(draw);
   }
-  build();draw(t0);addEventListener("resize",()=>{if(alive){build();if(reduced)draw(performance.now())}});
+  let t0set=false;build();draw(performance.now());addEventListener("resize",()=>{if(alive){build();if(reduced)draw(performance.now())}});
 
   let done=false;
   const hide=()=>{if(done)return;done=true;clearTimeout(safety);anim="a-open";render();setTimeout(()=>{if(anim==="a-open")anim=""},1400);
@@ -1042,8 +1030,8 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;dropBoot(false);return}
   let fl;try{fl=document.fonts&&document.fonts.load?document.fonts.load('700 40px "Antonio"').catch(()=>{}):null}catch(_){fl=null}
   const fontReady=Promise.race([fl||Promise.resolve(),new Promise(r=>setTimeout(r,700))]);
   const safety=setTimeout(()=>gate(),4500); /* in ogni caso l'intro si chiude */
-  const showFinal=()=>{[wrap,t1,t2,line].forEach(el=>{el.style.opacity=1;el.style.transform="none"})};
-  if(reduced||!sp.animate){
+  const showFinal=()=>{hold.remove();[wrap,t1,t2,line].forEach(el=>{el.style.opacity=1;el.style.transform="none"})};
+  if(reduced||!sp.animate){hold.remove();
     [wrap,t1,t2,line].forEach(el=>{el.style.opacity=1;el.style.transform="none"});
     setTimeout(gate,1600);return;
   }
@@ -1053,18 +1041,19 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;dropBoot(false);return}
     const rw=row.getBoundingClientRect().width, lw=wrap.getBoundingClientRect().width;
     const dx=(rw-lw)/2;
     wrap.animate([
-      {opacity:0,transform:`translateX(${dx}px) scale(.62)`,filter:"blur(14px)",easing:E},
-      {opacity:1,transform:`translateX(${dx}px) scale(1.04)`,filter:"blur(0px)",offset:.38,easing:"ease-in-out"},
-      {opacity:1,transform:`translateX(${dx}px) scale(1)`,filter:"blur(0px)",offset:.5,easing:S},
-      {opacity:1,transform:"translateX(0px) scale(1)",filter:"blur(0px)"}],
-      {duration:2000,fill:"forwards"});
-    sheen.animate([{backgroundPosition:"-150% 0"},{backgroundPosition:"250% 0"}],{duration:900,delay:650,easing:"ease-in-out",fill:"both"});
-    line.animate([{opacity:0,transform:"scaleY(0)"},{opacity:1,transform:"scaleY(1)"}],{duration:650,delay:1250,easing:E,fill:"forwards"});
+      {opacity:1,transform:`translateX(${dx}px) scale(1)`,easing:"ease-in-out"},
+      {opacity:1,transform:`translateX(${dx}px) scale(1.05)`,offset:.2,easing:"ease-in-out"},
+      {opacity:1,transform:`translateX(${dx}px) scale(1)`,offset:.34,easing:S},
+      {opacity:1,transform:"translateX(0px) scale(1)"}],
+      {duration:1550,fill:"forwards"});
+    hold.remove();
+    sheen.animate([{backgroundPosition:"-150% 0"},{backgroundPosition:"250% 0"}],{duration:900,delay:120,easing:"ease-in-out",fill:"both"});
+    line.animate([{opacity:0,transform:"scaleY(0)"},{opacity:1,transform:"scaleY(1)"}],{duration:650,delay:760,easing:E,fill:"forwards"});
     [t1,t2].forEach((el,i)=>el.animate([
       {opacity:0,transform:"translateX(-28px)",filter:"blur(8px)",clipPath:"inset(0 100% 0 0)"},
       {opacity:1,transform:"translateX(0)",filter:"blur(0)",clipPath:"inset(0 0% 0 0)"}],
-      {duration:850,delay:1400+i*140,easing:E,fill:"forwards"}));
-    setTimeout(gate,3300);
+      {duration:850,delay:900+i*140,easing:E,fill:"forwards"}));
+    setTimeout(gate,2800);
   }catch(_){showFinal();setTimeout(gate,1200)}}).catch(()=>{showFinal();setTimeout(gate,1200)});
 }
 runSplash();

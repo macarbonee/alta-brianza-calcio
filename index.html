@@ -31,7 +31,28 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="boot" style="position:fixed;inset:0;z-index:60;background:#0b1854;display:grid;place-items:center"><img src="img/logo.webp" alt="" style="height:clamp(120px,36vw,190px);width:auto;max-width:none"></div>
+<div id="boot" style="position:fixed;inset:0;z-index:60;background:#0b1854;display:grid;place-items:center;overflow:hidden"><canvas id="bootcv" style="position:absolute;inset:0;width:100%;height:100%"></canvas><div style="position:absolute;inset:0;background:radial-gradient(70% 60% at 50% 48%,transparent 30%,rgba(5,10,40,.55))"></div><img id="bootlogo" src="img/logo.webp" alt="" style="position:relative;height:clamp(120px,36vw,190px);width:auto;max-width:none;filter:drop-shadow(0 14px 28px rgba(0,0,0,.4))"></div>
+<script>
+/* sfondo a triangoli dell'apertura: disegnato subito, identico a quello dell'animazione */
+(function(){
+  function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+  var shades=[[20,48,150],[26,58,170],[16,38,128],[32,70,190],[14,30,110],[24,52,160]];
+  function build(W,H){var r=rng(1951),s=Math.max(70,Math.min(W,H)/5),h=s*0.866,tris=[];
+    for(var row=-1;row*h<H+h;row++)for(var c=-1;c*s/2<W+s;c++){var x=c*s/2+(row%2?s/2:0),y=row*h,up=(c+row)%2===0;
+      var p=up?[[x,y+h],[x+s/2,y],[x+s,y+h]]:[[x,y],[x+s,y],[x+s/2,y+h]];
+      var b=shades[(r()*shades.length)|0];tris.push({p:p,b:b,ph:r()*6.28,sp:.6+r()*1.2,d:Math.hypot(x-W/2,y-H/2)})}
+    return tris}
+  function draw(cx,tris,t){
+    for(var i=0;i<tris.length;i++){var o=tris[i];
+      var wave=Math.max(0,1-Math.abs(o.d/420-(t*1.1-0.4)))*0.35, k=1+0.07*Math.sin(t*o.sp+o.ph)+wave;
+      cx.fillStyle="rgb("+(o.b[0]*k|0)+","+(o.b[1]*k|0)+","+(Math.min(255,o.b[2]*k)|0)+")";
+      cx.beginPath();cx.moveTo(o.p[0][0],o.p[0][1]);cx.lineTo(o.p[1][0],o.p[1][1]);cx.lineTo(o.p[2][0],o.p[2][1]);cx.closePath();cx.fill();
+      cx.strokeStyle="rgba(255,255,255,.035)";cx.stroke()}}
+  function size(cv){var dpr=Math.min(2,devicePixelRatio||1),W=innerWidth,H=innerHeight,cx=cv.getContext("2d");cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);return {cx:cx,W:W,H:H}}
+  window.ABTRI={build:build,draw:draw,size:size};
+  try{var cv=document.getElementById("bootcv"),z=size(cv);draw(z.cx,build(z.W,z.H),0)}catch(e){}
+})();
+</script>
 <div id="app"></div>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
 <script defer src="config.js"></script>
