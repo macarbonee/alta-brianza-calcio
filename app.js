@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794239536";
+const APP_V="1794240647";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -19,6 +19,8 @@ const CFG=window.AB_CONFIG||{};
 const SB=(window.supabase&&CFG.url&&CFG.key&&!/INSERISCI/.test(CFG.url+CFG.key))?window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true,storageKey:"ab-auth"}}):null;
 let ABD_ME=null, MYID=null;
 try{ABD_ME=JSON.parse(localStorage.getItem("abd-user")||"null")}catch(_){}
+const IS_APP=!!(navigator.standalone||(window.matchMedia&&(matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches)));
+function webOK(){try{return localStorage.getItem("ab-web")==="1"}catch(_){return true}}
 const slug=t=>t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z]/g,"");
 const capW=w=>w.charAt(0).toUpperCase()+w.slice(1);
 /* controlla la sessione salvata sul telefono */
@@ -1004,7 +1006,54 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";document.body.
   sp.addEventListener("click",()=>{if(ABD_ME)hide()});
   /* primo accesso: dopo l'animazione compare il tasto Accedi */
   let gated=false;
-  const gate=async()=>{await sessReady;if(ABD_ME){hide();return}if(gated)return;gated=true;clearTimeout(safety);showLogin()};
+  const gate=async()=>{await sessReady;
+    if(!IS_APP&&!webOK()){if(gated)return;gated=true;clearTimeout(safety);showInstall();return}
+    if(ABD_ME){hide();return}if(gated)return;gated=true;clearTimeout(safety);showLogin()};
+  /* aperta dal link (non dall'icona): prima si installa nella schermata Home */
+  function showInstall(){
+    const ua=navigator.userAgent||"",isIOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+    const isPad=isIOS&&(/iPad/.test(ua)||Math.min(screen.width,screen.height)>=700),isAndroid=/Android/i.test(ua);
+    const inApp=/FBAN|FBAV|Instagram|Line\/|WhatsApp|GSA\//.test(ua)||(isIOS&&!/Safari\//.test(ua));
+    const iosV=(()=>{const m=ua.match(/OS (\d+)_/);return m?+m[1]:0})(),newSafari=iosV>=26;
+    const SH='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/></svg>';
+    const PL='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+    const DOTS='<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+    const VD='<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
+    const ICO=`<img src="icons/apple-touch-icon.png" alt="" width="22" height="22" style="border-radius:6px">`;
+    const step=(n,ic,t)=>`<li><span class="in-n">${n}</span><span class="in-ic">${ic}</span><span>${t}</span></li>`;
+    let steps="",arrow="",btn="",note="";
+    if(inApp){
+      steps=step(1,isIOS?DOTS:VD,`Tocca il menu del browser ${isIOS?"(in basso o in alto)":"(i tre puntini)"}`)+step(2,isIOS?"🧭":"🌐",`Scegli <b>Apri in ${isIOS?"Safari":"Chrome"}</b>`)+step(3,PL,"Lì potrai aggiungerla alla Home");
+      note="Da WhatsApp o Instagram non si può installare: va aperta nel browser.";
+    }else if(isIOS){
+      steps=(newSafari&&!isPad?step(1,DOTS,"Tocca <b>⋯</b> in basso a destra, poi <b>Condividi</b>"):step(1,SH,`Tocca <b>Condividi</b> ${isPad?"in alto a destra":"in basso"}`))
+        +step(2,PL,"Scorri e tocca <b>Aggiungi alla schermata Home</b>")+step(3,ICO,"Apri l'app dall'icona <b>AB Calcio</b>");
+      arrow=isPad?"top":(newSafari?"br":"bc");
+      note="Se l'hai aperta da WhatsApp e non trovi l'opzione, aprila prima in Safari.";
+    }else if(isAndroid){
+      btn=`<button type="button" class="sp-go" id="inGo" ${window.__bip?"":"hidden"}>Installa</button>`;
+      steps=step(1,VD,"Tocca il menu <b>⋮</b> in alto a destra in Chrome")+step(2,PL,"Scegli <b>Installa app</b> o <b>Aggiungi a schermata Home</b>")+step(3,ICO,"Apri l'app dall'icona <b>AB Calcio</b>");
+    }else{
+      steps=step(1,"📱","Apri questo link <b>dal telefono</b>")+step(2,PL,"Aggiungila alla schermata Home")+step(3,ICO,"Aprila dall'icona <b>AB Calcio</b>");
+    }
+    const lg=document.createElement("div");lg.className="sp-login";
+    lg.innerHTML=`<div class="sp-form sp-inst" role="dialog" aria-label="Installa l'app">
+        <b class="sp-ft">Installa l'app</b>
+        <p class="in-sub">La trovi nella Home e si apre a tutto schermo, come un'app vera.</p>
+        ${btn}<ol class="in-steps">${steps}</ol>
+        ${note?`<p class="in-note">${note}</p>`:""}
+        <button type="button" class="in-web" id="inWeb">Continua nel browser</button>
+      </div>${arrow?`<div class="in-arrow ${arrow}" aria-hidden="true"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15M6 13l6 6 6-6"/></svg></div>`:""}`;
+    sp.appendChild(lg);sp.removeAttribute("aria-hidden");
+    requestAnimationFrame(()=>{lg.classList.add("in");sp.classList.add("login-open")});
+    lg.addEventListener("click",e=>e.stopPropagation());
+    const go=lg.querySelector("#inGo");
+    if(go){const show=()=>{go.hidden=false;lg.querySelector(".in-steps").classList.add("alt");lg.querySelector(".in-sub").textContent="Un tocco e la trovi nella Home, a tutto schermo come un'app vera. Oppure:"};if(window.__bip)show();else window.__bipcb=show;
+      go.onclick=async()=>{const ev=window.__bip;if(!ev)return;ev.prompt();try{const r=await ev.userChoice;if(r&&r.outcome==="accepted"){go.textContent="Installata! Aprila dalla Home";go.classList.add("ok");go.disabled=true}}catch(_){}window.__bip=null}}
+    lg.querySelector("#inWeb").onclick=()=>{try{localStorage.setItem("ab-web","1")}catch(_){}
+      lg.style.transition="opacity .3s ease";lg.style.opacity="0";sp.classList.remove("login-open");
+      setTimeout(()=>{lg.remove();gated=false;gate()},320)};
+  }
   function showLogin(){
     const lg=document.createElement("div");lg.className="sp-login";
     lg.innerHTML=`<button type="button" class="sp-acc" id="spAcc">Accedi</button>
