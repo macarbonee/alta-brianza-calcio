@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794247528";
+const APP_V="1794247787";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -193,9 +193,21 @@ function presSection(){
     </div></section>`;
 }
 function bindPres(){const t=$("#prTog");if(!t)return;
-  t.onclick=()=>{presOpen=!presOpen;const card=t.closest(".prs");card.classList.toggle("open",presOpen);t.setAttribute("aria-expanded",presOpen);
-    t.querySelector("span").textContent=presOpen?"Mostra meno":`Mostra tutti (${S.players.length})`;
-}}
+  t.onclick=()=>{const card=t.closest(".prs"),more=card.querySelector(".pr-more");
+    const label=()=>{t.setAttribute("aria-expanded",presOpen);t.querySelector("span").textContent=presOpen?"Mostra meno":`Mostra tutti (${S.players.length})`};
+    if(!presOpen){presOpen=true;card.classList.add("open");label();return}
+    /* chiusura leggera per il telefono: le righe sfumano, poi la tendina si chiude in un colpo
+       e quello che c'è sotto risale scivolando (solo movimento, niente ricalcoli a ogni fotogramma) */
+    presOpen=false;label();
+    const red=reducedM();if(red){card.classList.remove("open");return}
+    /* se l'inizio della tendina è fuori schermo, prima si risale dolcemente fin lì */
+    const top=card.getBoundingClientRect().top,off=top-90,wait=off<0?Math.min(520,220+Math.abs(off)*.4):0;
+    if(off<0)window.scrollBy({top:off,behavior:"smooth"});
+    setTimeout(()=>card.classList.add("closing"),Math.max(0,wait-170));
+    setTimeout(()=>{const h=more.offsetHeight;card.classList.add("snap");card.classList.remove("open");
+      const sec=card.closest("section"),movers=[t,...(()=>{const a=[];let n=sec.nextElementSibling;while(n){a.push(n);n=n.nextElementSibling}return a})()];
+      movers.forEach(el=>el.animate([{transform:`translateY(${h}px)`},{transform:"none"}],{duration:420,easing:"cubic-bezier(.22,1,.36,1)"}));
+      requestAnimationFrame(()=>card.classList.remove("snap","closing"))},Math.max(170,wait))}}
 function openAtt(id){
   const e=S.events.find(x=>x.id===id);if(!e)return;
   const fresh=!e.att||!Object.keys(e.att).length;

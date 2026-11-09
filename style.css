@@ -1207,3 +1207,7 @@ html.pinbar .tabbar{bottom:auto!important;top:var(--tb-top)!important}
 body{overflow-anchor:none}
 .pr-more{transition:grid-template-rows .45s cubic-bezier(.4,0,.2,1)}
 .prs:not(.open) .pr-more .pr-row{opacity:0;transform:none;transition:opacity .3s ease .05s}
+
+.prs.closing .pr-more .pr-row{opacity:0;transform:translateY(-6px);transition:opacity .16s ease,transform .16s ease}
+.prs.snap .pr-more,.prs.snap .pr-more .pr-row{transition:none!important}
+.prs .pr-tog{position:relative;z-index:1;background:var(--surface)}
