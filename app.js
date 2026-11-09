@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794240973";
+const APP_V="1794241194";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -1026,7 +1026,7 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";document.body.
       steps=step(1,isIOS?DOTS:VD,`Tocca il menu del browser ${isIOS?"(in basso o in alto)":"(i tre puntini)"}`)+step(2,isIOS?"🧭":"🌐",`Scegli <b>Apri in ${isIOS?"Safari":"Chrome"}</b>`)+step(3,PL,"Lì potrai aggiungerla alla Home");
       note="Da WhatsApp o Instagram non si può installare: va aperta nel browser.";
     }else if(isIOS){
-      steps=(newSafari&&!isPad?step(1,DOTS,"Tocca <b>⋯</b> in basso a destra, poi <b>Condividi</b>"):step(1,SH,`Tocca <b>Condividi</b> ${isPad?"in alto a destra":"in basso"}`))
+      steps=step(1,SH,"Tocca <b>Condividi</b>")
         +step(2,PL,"Scorri e tocca <b>Aggiungi alla schermata Home</b>")+step(3,ICO,"Apri l'app dall'icona <b>Alta Brianza</b>");
       arrow=isPad?"top":(newSafari?"br":"bc");
       note="Se l'hai aperta da WhatsApp e non trovi l'opzione, aprila prima in Safari.";
