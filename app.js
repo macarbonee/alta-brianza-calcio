@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794240853";
+const APP_V="1794240973";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -20,7 +20,7 @@ const SB=(window.supabase&&CFG.url&&CFG.key&&!/INSERISCI/.test(CFG.url+CFG.key))
 let ABD_ME=null, MYID=null;
 try{ABD_ME=JSON.parse(localStorage.getItem("abd-user")||"null")}catch(_){}
 const IS_APP=!!(navigator.standalone||(window.matchMedia&&(matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches)));
-function webOK(){try{return localStorage.getItem("ab-web")==="1"}catch(_){return true}}
+function webOK(){if(/[?&]installa\b/.test(location.search))return false;try{return localStorage.getItem("ab-web")==="1"}catch(_){return true}}
 const slug=t=>t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z]/g,"");
 const capW=w=>w.charAt(0).toUpperCase()+w.slice(1);
 /* controlla la sessione salvata sul telefono */
