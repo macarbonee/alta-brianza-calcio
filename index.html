@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="it">
+<html lang="it" style="background:#0b1854">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Alta Brianza Calcio</title>
-<meta name="theme-color" content="#0d1a58">
+<meta name="theme-color" content="#0b1854">
+<meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,9 +27,9 @@
 <link rel="apple-touch-startup-image" href="icons/splash/s-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="icons/splash/s-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Antonio:wght@600;700&family=Sora:wght@400;500;700;800&family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Antonio:wght@600;700&family=Sora:wght@400;500;700;800&family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" media="print" onload="this.media=\'all\'">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html,body{background:#0b1854}body{margin:0;font:14px system-ui,sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}img{max-width:100%}[hidden]{display:none!important}</style>
-<link rel="stylesheet" href="style.css">
+<link id="mcss" rel="stylesheet" href="style.css" media="print" onload="this.media='all';window.__css=1;window.__go&&window.__go()">
 </head>
 <body>
 <div id="boot" style="position:fixed;inset:0;z-index:60;background:#0b1854;display:grid;place-items:center;overflow:hidden"><canvas id="bootcv" style="position:absolute;inset:0;width:100%;height:100%"></canvas><div style="position:absolute;inset:0;background:radial-gradient(70% 60% at 50% 48%,transparent 30%,rgba(5,10,40,.55))"></div><img id="bootlogo" src="img/logo.webp" alt="" style="position:relative;height:clamp(120px,36vw,190px);width:auto;max-width:none;filter:drop-shadow(0 14px 28px rgba(0,0,0,.4))"></div>
@@ -54,10 +55,16 @@
 })();
 </script>
 <div id="app"></div>
-<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
-<script defer src="config.js"></script>
-<script defer src="logos.js"></script>
-<script defer src="app.js"></script>
+<script>
+/* prima si disegna la schermata d'avvio, poi (con lo stile pronto) si caricano i programmi in ordine */
+(function(){
+  var srcs=["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js","config.js","logos.js","app.js"],i=0;
+  function next(){if(i>=srcs.length)return;var el=document.createElement("script");el.src=srcs[i++];el.async=false;el.onload=next;el.onerror=next;document.body.appendChild(el)}
+  window.__go=function(){window.__go=null;next()};
+  if(window.__css)window.__go();
+  setTimeout(function(){if(window.__go){var l=document.getElementById("mcss");if(l)l.media="all";window.__go()}},4000);
+})();
+</script>
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
 </body>
 </html>
