@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794243957";
+const APP_V="1794244076";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -11,7 +11,7 @@ const EMPTY={team:"Alta Brianza Tavernerio",short:"Alta Brianza Tavernerio",cate
 function withLogos(d){return Object.assign({},EMPTY,d||{},{logos:LOGOS})}
 function stripLogos(o){const {logos,...r}=o;return r}
 let S=withLogos((()=>{try{return JSON.parse(localStorage.getItem("ab-cache")||"null")}catch(_){return null}})());
-const ORDER=["squadra","partite","allenamenti","rosa","tattica"];
+const ORDER=["squadra","allenamenti","partite","rosa","tattica"];
 let anim="", calAnim="", dayAnim=false, pillFromX=null, dayTouched=false, dragJustEnded=false;
 let dirty=false, canEdit=false, editMode=false, art=null, saving=false;
 /* accesso: solo al primo ingresso, poi resta collegato su questo telefono */
