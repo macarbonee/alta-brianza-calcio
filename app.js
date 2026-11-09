@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794245608";
+const APP_V="1794245866";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -147,7 +147,7 @@ function attRec(e,pid){const a=e.att;if(!a||!Object.keys(a).length)return {in:tr
 function attStats(e){const ids=S.players.map(p=>p.id),recs=ids.map(id=>attRec(e,id)),pres=recs.filter(r=>r.in),rp=pres.map(r=>r.rpe).filter(v=>v!=null);
   return {done:trDone(e),pres:pres.length,tot:ids.length,rpe:rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null,nrpe:rp.length}}
 /* i 20 allenamenti fatti prima dell'app contano come presenze */
-function playerAtt(pid){let tot=+(S.allenBase??20)||0,pres=tot,sum=0,n=0;S.events.filter(e=>e.type!=="partita"&&trDone(e)).forEach(e=>{tot++;const r=attRec(e,pid);if(r.in){pres++;if(r.rpe!=null){sum+=r.rpe;n++}}});
+function playerAtt(pid){let tot=+(S.allenBase??20)||0,pres=tot,sum=0,n=0;S.events.filter(e=>e.type!=="partita"&&(trDone(e)||(e.att&&Object.keys(e.att).length))).forEach(e=>{tot++;const r=attRec(e,pid);if(r.in){pres++;if(r.rpe!=null){sum+=r.rpe;n++}}});
   return {tot,pres,rpe:n?sum/n:null}}
 function trDone(e){const nowT=new Date().toTimeString().slice(0,5);return e.date<todayISO||(e.date===todayISO&&(e.end||e.time)<=nowT)}
 const CLK='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
@@ -182,8 +182,7 @@ function presSection(){
   if(!rows.length)return "";
   const ini=n=>{const w=n.trim().split(/\s+/);return (w[0][0]+(w[1]?w[1][0]:"")).toUpperCase()};
   const row=(r,i)=>`<div class="pr-row" style="--c:${PCTC(r.pct)};--rc:${RCOL[r.p.role]}">
-      <span class="pr-av">${esc(ini(r.p.name))}${i<3?`<i class="pr-rk r${i}">${i+1}</i>`:""}</span>
-      <span class="pr-mid"><span class="pr-nm">${nameHTML(r.p.name)}</span><span class="pr-bar"><i style="width:${r.pct==null?0:Math.round(r.pct*100)}%"></i></span></span>
+      <span class="pr-mid"><span class="pr-nm">${nameHTML(r.p.name)}</span></span>
       <span class="pr-r"><b class="pr-pct">${r.pct==null?"–":Math.round(r.pct*100)+"%"}</b><span class="pr-ass ${r.ass?"":"zero"}">${r.ass?`${r.ass} ${r.ass===1?"assenza":"assenze"}`:"mai assente"}</span></span></div>`;
   const top=rows.slice(0,3),rest=rows.slice(3);
   return `<section><h2>Presenze giocatori</h2>
@@ -196,7 +195,7 @@ function presSection(){
 function bindPres(){const t=$("#prTog");if(!t)return;
   t.onclick=()=>{presOpen=!presOpen;const card=t.closest(".prs");card.classList.toggle("open",presOpen);t.setAttribute("aria-expanded",presOpen);
     t.querySelector("span").textContent=presOpen?"Mostra meno":`Mostra tutti (${S.players.length})`;
-    if(!presOpen){const top=card.getBoundingClientRect().top;if(top<0)window.scrollBy({top:top-90,behavior:"smooth"})}}}
+}}
 function openAtt(id){
   const e=S.events.find(x=>x.id===id);if(!e)return;
   const fresh=!e.att||!Object.keys(e.att).length;

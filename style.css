@@ -1098,13 +1098,13 @@ html.pinbar .tabbar{bottom:auto!important;top:var(--tb-top)!important}
 /* presenze giocatori */
 .prs{padding:4px 12px 0;border-radius:22px;overflow:hidden}
 .pr-list{display:flex;flex-direction:column}
-.pr-row{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.pr-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
 .pr-av{position:relative;flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font:700 14px var(--f-ui);letter-spacing:.02em;color:#fff;
   background:linear-gradient(145deg,color-mix(in srgb,var(--rc) 85%,#fff),color-mix(in srgb,var(--rc) 80%,#000));box-shadow:0 4px 10px color-mix(in srgb,var(--rc) 35%,transparent)}
 .pr-rk{position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font:800 10px var(--f-ui);font-style:normal;color:#3d2a00;border:2px solid var(--surface)}
 .pr-rk.r0{background:linear-gradient(180deg,#ffe27a,#e9b52c)}.pr-rk.r1{background:linear-gradient(180deg,#f4f6ff,#b9c2dc);color:#1a2552}.pr-rk.r2{background:linear-gradient(180deg,#f2c39a,#c98a54);color:#3a1d05}
-.pr-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
-.pr-nm{font:400 15.5px "Sora",var(--f-ui);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-mid{flex:1;min-width:0;display:flex;flex-direction:column}
+.pr-nm{font:400 16px "Sora",var(--f-ui);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pr-bar{height:6px;border-radius:4px;background:var(--chip);overflow:hidden}
 .pr-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 70%,#fff),var(--c))}
 .pr-r{flex:none;width:76px;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
@@ -1112,10 +1112,12 @@ html.pinbar .tabbar{bottom:auto!important;top:var(--tb-top)!important}
 .pr-ass{font:600 11px var(--f-ui);color:var(--loss);white-space:nowrap}
 .pr-ass.zero{color:var(--muted)}
 /* tendina: si apre/chiude morbida, le righe scendono una dopo l'altra */
-.pr-more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .55s cubic-bezier(.22,1,.36,1)}
+.pr-more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .42s cubic-bezier(.4,0,.2,1)}
+.prs.open .pr-more{transition:grid-template-rows .55s cubic-bezier(.22,1,.36,1)}
+.prs.open .pr-more .pr-row{transition:opacity .3s ease,transform .45s cubic-bezier(.22,1,.36,1)}
 .prs.open .pr-more{grid-template-rows:1fr}
 .pr-in{min-height:0;overflow:hidden}
-.pr-more .pr-row{opacity:0;transform:translateY(-10px) scale(.98);transition:opacity .3s ease,transform .45s cubic-bezier(.22,1,.36,1)}
+.pr-more .pr-row{opacity:0;transform:translateY(-8px);transition:opacity .18s ease,transform .3s ease}
 .prs.open .pr-more .pr-row{opacity:1;transform:none}
 .prs.open .pr-more .pr-row:nth-child(1){transition-delay:0.04s}
 .prs.open .pr-more .pr-row:nth-child(2){transition-delay:0.08s}
