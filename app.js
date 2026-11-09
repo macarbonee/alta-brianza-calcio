@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794246725";
+const APP_V="1794247091";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -155,8 +155,8 @@ function allRow(e){const d=pd(e.date),st=attStats(e),fut=!trDone(e),pct=st.tot?s
   return `<button class="arow ${fut?"fut":""} ${st.done&&st.nrpe?"ok":st.done?"todo":""}" data-att="${e.id}">
     <span class="ar-d"><small>${GG[d.getDay()]}</small><b>${d.getDate()}</b><em>${MESI[d.getMonth()].slice(0,3)}</em>${st.done&&st.nrpe?'<i class="ar-ok" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>':""}</span>
     <span class="ar-m"><b>Allenamento</b><small>${CLK}${esc(e.time)}${e.end?"–"+esc(e.end):""}${e.place?" · "+esc(e.place):""}</small>
-      ${st.done?`<span class="ar-rp" style="--c:${RPEC(st.rpe==null?null:Math.round(st.rpe))}">${st.rpe==null?"RPE da inserire":`RPE medio <b>${st.rpe.toFixed(1)}</b>`}</span>`:`<span class="ar-tag">In programma</span>`}</span>
-    ${st.done?`<span class="ar-ring" aria-label="${st.pres} presenti su ${st.tot}"><svg viewBox="0 0 40 40" width="50" height="50"><circle cx="20" cy="20" r="${R}" class="rg-bg"/><circle cx="20" cy="20" r="${R}" class="rg-fg" stroke-dasharray="${(C*pct).toFixed(1)} ${C.toFixed(1)}"/></svg><span><b>${st.pres}</b><i>/${st.tot}</i></span></span>`
+      ${st.done?(st.rpe==null?`<span class="ar-tag todo">RPE da inserire</span>`:""):`<span class="ar-tag">In programma</span>`}</span>
+    ${st.done?`<span class="ar-stats"><span class="ar-st" style="--c:${PCTC(pct)}"><b>${st.pres}<i>/${st.tot}</i></b><small>Presenti</small></span><span class="ar-st" style="--c:${RPEC(st.rpe==null?null:Math.round(st.rpe))}"><b>${st.rpe==null?"–":st.rpe.toFixed(1)}</b><small>RPE</small></span></span>`
       :`<span class="ar-go" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>`}
   </button>`}
 function vAllen(){

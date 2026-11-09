@@ -1169,3 +1169,11 @@ html.pinbar .tabbar{bottom:auto!important;top:var(--tb-top)!important}
 .at-rpe button:active{transform:scale(.88)}
 .at-rpe button.on{background:linear-gradient(160deg,color-mix(in srgb,var(--c) 75%,#fff),var(--c));color:#fff;transform:scale(1.12);box-shadow:0 4px 12px color-mix(in srgb,var(--c) 45%,transparent)}
 .sheet:has(#atX) h3{padding-right:46px}
+
+.ar-stats{flex:none;display:flex;gap:6px}
+.ar-st{min-width:54px;padding:7px 6px 6px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1;
+  background:color-mix(in srgb,var(--c) 11%,var(--surface));border:1px solid color-mix(in srgb,var(--c) 30%,transparent)}
+.ar-st b{font:800 17px var(--f-ui);letter-spacing:-.02em;color:var(--c)}
+.ar-st b i{font-style:normal;font-size:11px;font-weight:700;opacity:.7}
+.ar-st small{font:700 9px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ar-tag.todo{background:color-mix(in srgb,var(--bib) 25%,transparent);color:var(--ink)}
