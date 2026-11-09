@@ -1141,3 +1141,4 @@ html.pinbar .tabbar{bottom:auto!important;top:var(--tb-top)!important}
 .pr-chev{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--pitch) 12%,transparent);transition:transform .5s cubic-bezier(.3,1.3,.5,1)}
 .prs.open .pr-chev{transform:rotate(180deg)}
 @media (prefers-reduced-motion: reduce){.pr-more,.pr-more .pr-row,.pr-chev{transition:none}}
+.pr-row::before{content:"";flex:none;align-self:stretch;width:4px;margin:2px 0;border-radius:3px;background:linear-gradient(180deg,var(--c),color-mix(in srgb,var(--c) 35%,transparent))}
