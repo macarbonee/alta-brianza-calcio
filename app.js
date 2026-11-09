@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794244840";
+const APP_V="1794245417";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -146,7 +146,8 @@ function attOf(e){return e.att||{}}
 function attRec(e,pid){const a=e.att;if(!a||!Object.keys(a).length)return {in:true,rpe:null};return a[pid]||{in:true,rpe:null}}
 function attStats(e){const ids=S.players.map(p=>p.id),recs=ids.map(id=>attRec(e,id)),pres=recs.filter(r=>r.in),rp=pres.map(r=>r.rpe).filter(v=>v!=null);
   return {done:trDone(e),pres:pres.length,tot:ids.length,rpe:rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null,nrpe:rp.length}}
-function playerAtt(pid){let tot=0,pres=0,sum=0,n=0;S.events.filter(e=>e.type!=="partita"&&trDone(e)).forEach(e=>{tot++;const r=attRec(e,pid);if(r.in){pres++;if(r.rpe!=null){sum+=r.rpe;n++}}});
+/* i 20 allenamenti fatti prima dell'app contano come presenze */
+function playerAtt(pid){let tot=+(S.allenBase??20)||0,pres=tot,sum=0,n=0;S.events.filter(e=>e.type!=="partita"&&trDone(e)).forEach(e=>{tot++;const r=attRec(e,pid);if(r.in){pres++;if(r.rpe!=null){sum+=r.rpe;n++}}});
   return {tot,pres,rpe:n?sum/n:null}}
 function trDone(e){const nowT=new Date().toTimeString().slice(0,5);return e.date<todayISO||(e.date===todayISO&&(e.end||e.time)<=nowT)}
 const CLK='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
@@ -188,7 +189,6 @@ function presSection(){
   const tot=rows[0].tot;
   return `<section><h2>Presenze giocatori</h2>
     <div class="card prs ${presOpen?"open":""}">
-      ${tot?"":'<p class="pr-note">Le percentuali partono dagli allenamenti segnati nell\'app, dal 10 novembre in poi.</p>'}
       <div class="pr-list">${top.map(row).join("")}</div>
       ${rest.length?`<div class="pr-more" id="prMore" ${presOpen?"":"hidden"}><div class="pr-list">${rest.map(row).join("")}</div></div>
       <button class="pr-tog" id="prTog" aria-expanded="${presOpen}"><span>${presOpen?"Mostra meno":`Mostra tutti (${rows.length})`}</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>`:""}
