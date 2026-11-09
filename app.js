@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794246207";
+const APP_V="1794246291";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -201,7 +201,8 @@ function openAtt(id){
   const fresh=!e.att||!Object.keys(e.att).length;
   const work=Object.fromEntries(S.players.map(p=>[p.id,{...attRec(e,p.id)}]));
   let changed=false, openP=null;
-  const srt=(a,b)=>ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||a.num-b.num;
+  const sur=n=>{const i=n.indexOf(" ");return (i<0?n:n.slice(i+1)+" "+n.slice(0,i)).toLowerCase()};
+  const srt=(a,b)=>sur(a.name).localeCompare(sur(b.name),"it"); /* ordine alfabetico per cognome */
   const d=pd(e.date);
   const head=()=>{const ids=S.players.map(p=>p.id),pres=ids.filter(i=>work[i]&&work[i].in),rp=pres.map(i=>work[i].rpe).filter(v=>v!=null),m=rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null;
     return `<div class="at-sum"><div><b>${pres.length}<i>/${ids.length}</i></b><small>Presenti</small></div><div><b style="color:${RPEC(m==null?null:Math.round(m))}">${m==null?"–":m.toFixed(1)}</b><small>RPE medio</small></div><div><b>${rp.length}<i>/${pres.length}</i></b><small>RPE inseriti</small></div></div>`};
