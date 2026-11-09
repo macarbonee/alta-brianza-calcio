@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794239148";
+const APP_V="1794239536";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -24,10 +24,14 @@ const capW=w=>w.charAt(0).toUpperCase()+w.slice(1);
 /* controlla la sessione salvata sul telefono */
 const sessReady=(async()=>{
   if(!SB){return}
-  try{const {data}=await SB.auth.getSession();const u=data&&data.session&&data.session.user;
-    if(u){MYID=u.id;const m=u.user_metadata||{};if(!ABD_ME&&m.first)ABD_ME={first:m.first,last:m.last};onLogged()}
+  const offlineMode=()=>{/* senza rete: si usa la copia sul telefono, le modifiche partono al ritorno della connessione */
+    let id=null;try{id=localStorage.getItem("ab-myid")}catch(_){}
+    if(ABD_ME&&id){MYID=id;art=true;canEdit=true;render()}};
+  try{const {data,error}=await SB.auth.getSession();const u=data&&data.session&&data.session.user;
+    if(u){MYID=u.id;try{localStorage.setItem("ab-myid",u.id)}catch(_){}const m=u.user_metadata||{};if(!ABD_ME&&m.first)ABD_ME={first:m.first,last:m.last};onLogged()}
+    else if(ABD_ME&&(!navigator.onLine||error))offlineMode();
     else if(ABD_ME){/* sessione scaduta: si rientra */ABD_ME=null;try{localStorage.removeItem("abd-user")}catch(_){}}
-  }catch(_){/* offline: si usa la copia sul telefono */}
+  }catch(_){offlineMode()}
 })();
 async function abdSignIn(first,last,code){
   if(!SB)throw {msg:"App non ancora collegata al database."};
@@ -36,14 +40,17 @@ async function abdSignIn(first,last,code){
   if(r.error&&/invalid/i.test(r.error.message||"")){const r2=await SB.auth.signInWithPassword({email:`${slug(last)}.${slug(first)}@altabrianza.app`,password:pw});
     if(!r2.error){r=r2;[first,last]=[last,first]}}
   if(r.error){const net=!navigator.onLine||/fetch|network/i.test(r.error.message||"");throw {msg:net?"Nessuna connessione: riprova quando sei online.":"Nome o codice non corretti."}}
-  const u=r.data.user, m=u.user_metadata||{};MYID=u.id;
+  const u=r.data.user, m=u.user_metadata||{};MYID=u.id;try{localStorage.setItem("ab-myid",u.id)}catch(_){}
   const me={first:m.first||capW(first.toLowerCase()),last:(m.last||last).toUpperCase()};
   ABD_ME=me;try{localStorage.setItem("abd-user",JSON.stringify(me))}catch(_){}
   onLogged();await loadData(true).catch(()=>{});return me}
-function onLogged(){art=true;canEdit=true;subscribe();loadData().catch(()=>{});render()}
+function onLogged(){art=true;canEdit=true;subscribe();if(isPending()){dirty=true;save().then(ok=>{if(ok)loadData().catch(()=>{})})}else loadData().catch(()=>{});render()}
 /* ---------- DATABASE ---------- */
 let REMOTE_AT=null, pendingRemote=null, rtChan=null;
 function cacheS(){try{localStorage.setItem("ab-cache",JSON.stringify(stripLogos(S)))}catch(_){}}
+/* modifiche fatte senza connessione: restano sul telefono e partono appena torna la rete, anche dopo aver chiuso l'app */
+function setPending(on){try{on?localStorage.setItem("ab-pending","1"):localStorage.removeItem("ab-pending")}catch(_){}}
+function isPending(){try{return localStorage.getItem("ab-pending")==="1"}catch(_){return false}}
 function idleUI(){const a=document.activeElement;return !dirty&&!saving&&!document.getElementById("sheetbg")&&!document.getElementById("mOpen")&&!tEdit&&!(a&&a.matches&&a.matches("input,textarea,select"))}
 async function loadData(force){
   if(!SB||!MYID)return;
@@ -51,6 +58,7 @@ async function loadData(force){
   if(error)throw error;if(data)applyRemote(data,force)}
 function applyRemote(row,force){
   if(!row||!row.data)return;
+  if(isPending())return; /* prima si inviano le modifiche fatte offline */
   if(REMOTE_AT&&row.updated_at&&row.updated_at<=REMOTE_AT)return;
   if(!force&&!idleUI()){pendingRemote=row;return}
   pendingRemote=null;REMOTE_AT=row.updated_at||REMOTE_AT;
@@ -64,7 +72,9 @@ function subscribe(){
   try{rtChan=SB.channel("ab-state").on("postgres_changes",{event:"UPDATE",schema:"public",table:"app_state",filter:"id=eq.main"},p=>{
     const n=p&&p.new;if(n&&n.updated_by!==MYID)applyRemote(n)}).subscribe()}catch(_){}}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&MYID)loadData().catch(()=>{})});
-addEventListener("online",()=>{if(MYID){if(dirty&&!saving)save();else loadData().catch(()=>{})}});
+addEventListener("online",async()=>{if(!MYID||!SB)return;
+  try{const {data}=await SB.auth.getSession();if(!(data&&data.session)){/* sessione da rinnovare: riprova tra poco */return}}catch(_){return}
+  subscribe();if((dirty||isPending())&&!saving){dirty=true;save().then(ok=>{if(ok)loadData().catch(()=>{})})}else loadData().catch(()=>{})});
 let RESUME=null;try{const u=JSON.parse(sessionStorage.getItem("ab-upd")||"null");sessionStorage.removeItem("ab-upd");if(u&&Date.now()-u.t<60000)RESUME=u}catch(_){}
 let tab=RESUME&&["squadra","partite","rosa","tattica"].includes(RESUME.tab)?RESUME.tab:["squadra","partite","rosa","tattica"].includes(location.hash.slice(1))?location.hash.slice(1):"squadra";
 const now=new Date(); const todayISO=iso(now);
@@ -886,10 +896,10 @@ async function save(){
   const snap=JSON.stringify(stripLogos(S));
   try{const {data,error}=await SB.from("app_state").update({data:JSON.parse(snap),updated_by:MYID}).eq("id","main").select("updated_at").single();
     if(error)throw error;
-    REMOTE_AT=data&&data.updated_at||REMOTE_AT;saving=false;saveFailed=false;cacheS();
+    REMOTE_AT=data&&data.updated_at||REMOTE_AT;saving=false;saveFailed=false;cacheS();setPending(false);
     if(JSON.stringify(stripLogos(S))===snap)dirty=false;else autosave();
     if(wasFailed)render();return true}
-  catch(e){saving=false;saveFailed=true;cacheS();
+  catch(e){saving=false;saveFailed=true;cacheS();setPending(true);
     toast(!navigator.onLine?"Sei offline: le modifiche restano sul telefono e le salvo appena torna la connessione.":"Salvataggio non riuscito. Riprova tra poco.");
     render();return false}
 }
@@ -1077,7 +1087,7 @@ document.addEventListener("click",e=>{
       const out=async()=>{try{if(SB)await SB.auth.signOut()}catch(_){}
         try{if(rtChan){SB.removeChannel(rtChan);rtChan=null}}catch(_){}
         ABD_ME=null;MYID=null;art=null;canEdit=false;dirty=false;REMOTE_AT=null;
-        try{localStorage.removeItem("abd-user");localStorage.removeItem("ab-cache")}catch(_){}
+        try{["abd-user","ab-cache","ab-pending","ab-myid"].forEach(k=>localStorage.removeItem(k))}catch(_){}
         S=withLogos(null);RESUME=null;render();runSplash()};
       if(dirty&&!saving&&canEdit&&art){clearTimeout(asT);save().finally(out)}else out()};
     return}
