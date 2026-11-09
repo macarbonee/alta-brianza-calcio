@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794243028";
+const APP_V="1794243634";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -142,68 +142,77 @@ function attStats(e){const a=attOf(e),ids=S.players.map(p=>p.id),pres=ids.filter
   return {done:Object.keys(a).length>0,pres:pres.length,tot:ids.length,rpe:rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null,nrpe:rp.length}}
 function playerAtt(pid){let tot=0,pres=0,sum=0,n=0;S.events.filter(e=>e.type!=="partita"&&e.att&&Object.keys(e.att).length).forEach(e=>{tot++;const r=e.att[pid];if(r&&r.in){pres++;if(r.rpe!=null){sum+=r.rpe;n++}}});
   return {tot,pres,rpe:n?sum/n:null}}
-function allRow(e){const d=pd(e.date),st=attStats(e),fut=e.date>todayISO;
-  return `<button class="card arow ${fut?"fut":""} ${st.done?"ok":""}" data-att="${e.id}">
-    <span class="ar-d"><b>${d.getDate()}</b><small>${GG[d.getDay()]}</small></span>
-    <span class="ar-m"><b>Allenamento</b><small>ore ${esc(e.time)}${e.end?"–"+esc(e.end):""}${e.place?" · "+esc(e.place):""}</small></span>
-    ${st.done?`<span class="ar-s"><span class="ar-p"><b>${st.pres}</b><i>/${st.tot}</i></span><span class="ar-r" style="--c:${RPEC(st.rpe==null?null:Math.round(st.rpe))}">${st.rpe==null?"RPE –":"RPE "+st.rpe.toFixed(1)}</span></span>`
-      :`<span class="ar-tag">${fut?"In programma":"Da compilare"}</span>`}
+function trDone(e){const nowT=new Date().toTimeString().slice(0,5);return e.date<todayISO||(e.date===todayISO&&(e.end||e.time)<=nowT)}
+const CLK='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+function allRow(e){const d=pd(e.date),st=attStats(e),fut=!trDone(e),pct=st.tot?st.pres/st.tot:0,R=15,C=2*Math.PI*R;
+  return `<button class="arow ${fut?"fut":""} ${st.done?"ok":fut?"":"todo"}" data-att="${e.id}">
+    <span class="ar-d"><small>${GG[d.getDay()]}</small><b>${d.getDate()}</b><em>${MESI[d.getMonth()].slice(0,3)}</em>${st.done?'<i class="ar-ok" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>':""}</span>
+    <span class="ar-m"><b>Allenamento</b><small>${CLK}${esc(e.time)}${e.end?"–"+esc(e.end):""}${e.place?" · "+esc(e.place):""}</small>
+      ${st.done?`<span class="ar-rp" style="--c:${RPEC(st.rpe==null?null:Math.round(st.rpe))}">${st.rpe==null?"RPE non inserito":`RPE medio <b>${st.rpe.toFixed(1)}</b>`}</span>`:`<span class="ar-tag">${fut?"In programma":"Da compilare"}</span>`}</span>
+    ${st.done?`<span class="ar-ring" aria-label="${st.pres} presenti su ${st.tot}"><svg viewBox="0 0 40 40" width="50" height="50"><circle cx="20" cy="20" r="${R}" class="rg-bg"/><circle cx="20" cy="20" r="${R}" class="rg-fg" stroke-dasharray="${(C*pct).toFixed(1)} ${C.toFixed(1)}"/></svg><span><b>${st.pres}</b><i>/${st.tot}</i></span></span>`
+      :`<span class="ar-go" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>`}
   </button>`}
 function vAllen(){
   const tr=sorted().filter(e=>e.type!=="partita");
-  const past=tr.filter(e=>e.date<=todayISO).reverse(), next=tr.filter(e=>e.date>todayISO).slice(0,3);
-  const comp=past.filter(e=>attStats(e).done);
-  const avgP=comp.length?comp.reduce((x,e)=>{const s=attStats(e);return x+s.pres/s.tot},0)/comp.length:null;
-  const rp=comp.map(e=>attStats(e).rpe).filter(v=>v!=null),avgR=rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null;
+  const past=tr.filter(trDone).reverse(), next=tr.filter(e=>!trDone(e)).slice(0,3);
+  const base=+(S.allenBase??20)||0, fatti=base+past.length;
+  let sum=0,n=0;tr.forEach(e=>Object.values(e.att||{}).forEach(r=>{if(r&&r.in&&r.rpe!=null){sum+=r.rpe;n++}}));const avgR=n?sum/n:null;
   const months=arr=>{let last="",out="";arr.forEach(e=>{const d=pd(e.date),k=MESI[d.getMonth()]+" "+d.getFullYear();if(k!==last){out+=`<div class="mmonth"><span>${k}</span></div>`;last=k}out+=allRow(e)});return out};
   return `<section><h2>Allenamenti</h2>
-    <div class="totals atot">
-      <div class="card tot"><b>${comp.length}</b><span>Registrati</span></div>
-      <div class="card tot"><b>${avgP==null?"–":Math.round(avgP*100)+"%"}</b><span>Presenze</span></div>
-      <div class="card tot"><b style="color:${RPEC(avgR==null?null:Math.round(avgR))}">${avgR==null?"–":avgR.toFixed(1)}</b><span>RPE medio</span></div></div>
-    <p class="ev-sub rhint">Tocca un allenamento per segnare chi c'era e l'RPE di ognuno (fatica da 1 a 10).</p></section>
+    <div class="a-hero">
+      <div class="a-big"><b>${fatti}</b><span>Allenamenti fatti</span></div>
+      <div class="a-big" style="--c:${RPEC(avgR==null?null:Math.round(avgR))}"><b class="rpe">${avgR==null?"–":avgR.toFixed(1)}</b><span>RPE medio stagione</span>${avgR!=null?`<i class="a-bar"><i style="width:${avgR*10}%"></i></i>`:""}</div>
+    </div></section>
   ${next.length?`<section><h2>Prossimi</h2><div class="mlist">${next.map(allRow).join("")}</div></section>`:""}
-  <section><h2>Svolti · ${past.length}</h2><div class="mlist">${past.length?months(past):'<div class="card empty">Nessun allenamento svolto finora.</div>'}</div></section>`;
+  <section><h2>Svolti · ${past.length}</h2><div class="mlist">${past.length?months(past):'<div class="card empty">Gli allenamenti svolti compariranno qui: toccali per segnare presenze e RPE.</div>'}</div></section>`;
 }
 function openAtt(id){
   const e=S.events.find(x=>x.id===id);if(!e)return;
-  const work=JSON.parse(JSON.stringify(e.att||{}));let changed=false;
+  const fresh=!e.att||!Object.keys(e.att).length;
+  const work=fresh?Object.fromEntries(S.players.map(p=>[p.id,{in:true,rpe:null}])):JSON.parse(JSON.stringify(e.att));
+  let changed=fresh&&trDone(e), openP=null;
   const srt=(a,b)=>ROLES.indexOf(a.role)-ROLES.indexOf(b.role)||a.num-b.num;
   const d=pd(e.date);
   const head=()=>{const ids=S.players.map(p=>p.id),pres=ids.filter(i=>work[i]&&work[i].in),rp=pres.map(i=>work[i].rpe).filter(v=>v!=null),m=rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null;
     return `<div class="at-sum"><div><b>${pres.length}<i>/${ids.length}</i></b><small>Presenti</small></div><div><b style="color:${RPEC(m==null?null:Math.round(m))}">${m==null?"–":m.toFixed(1)}</b><small>RPE medio</small></div><div><b>${rp.length}<i>/${pres.length}</i></b><small>RPE inseriti</small></div></div>`};
-  const row=p=>{const r=work[p.id]||{},on=!!r.in;
-    return `<div class="at-row ${on?"on":""}" data-pr="${p.id}" style="--rc:${RCOL[p.role]}">
-      <button class="at-who" data-tg="${p.id}" ${canEdit?"":"disabled"} aria-pressed="${on}"><span class="at-ck" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
-        <span class="at-nm">${nameHTML(p.name)}</span><span class="at-num">${esc(p.num)}</span></button>
-      <div class="at-rpe" ${on?"":"hidden"}>${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button data-rp="${p.id}:${v}" class="${r.rpe===v?"on":""}" style="--c:${RPEC(v)}" ${canEdit?"":"disabled"} aria-label="RPE ${v}">${v}</button>`).join("")}</div>
+  const badge=r=>r&&r.in?(r.rpe!=null?`<span class="at-rb" style="--c:${RPEC(r.rpe)}">${r.rpe}</span>`:'<span class="at-rb empty">RPE</span>'):'<span class="at-rb off">assente</span>';
+  const row=p=>{const r=work[p.id]||{in:false};
+    return `<div class="at-row ${r.in?"on":""}" data-pr="${p.id}" style="--rc:${RCOL[p.role]}">
+      <div class="at-line"><button class="at-ck" data-tg="${p.id}" ${canEdit?"":"disabled"} aria-pressed="${!!r.in}" aria-label="Presente"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+        <button class="at-who" data-op="${p.id}" ${canEdit?"":"disabled"}><span class="at-nm">${nameHTML(p.name)}</span>${badge(r)}</button></div>
+      <div class="at-rpe" hidden>${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button data-rp="${p.id}:${v}" class="${r.rpe===v?"on":""}" style="--c:${RPEC(v)}" aria-label="RPE ${v}">${v}</button>`).join("")}</div>
     </div>`};
   sheet(`<button class="sheet-x" id="atX" aria-label="Chiudi">×</button>
     <h3>Allenamento · ${GG[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</h3>
-    <p class="ev-sub" style="margin:-4px 0 6px">ore ${esc(e.time)}${e.end?"–"+esc(e.end):""} · tocca il nome per segnarlo presente, poi il suo RPE</p>
+    <p class="ev-sub" style="margin:-4px 0 6px">${fresh?"Tutti segnati presenti: togli la spunta a chi mancava. ":""}Tocca un nome per il suo RPE.</p>
     <div id="atHead">${head()}</div>
-    ${canEdit?`<div class="at-tools"><button class="btn small" id="atAll">Tutti presenti</button><button class="btn small" id="atNone">Azzera</button></div>`:""}
     <div class="at-list">${S.players.slice().sort(srt).map(row).join("")}</div>
     <p class="at-leg"><b>RPE</b> 1 riposo · 3 facile · 5 un po' duro · 7 molto duro · 10 massimo</p>
     <div class="sheet-actions"><span></span><button class="btn primary" id="atOk">Fatto</button></div>`,bg=>{
     const q=x=>bg.querySelector(x);
     const upd=()=>{q("#atHead").innerHTML=head()};
-    const commit=()=>{if(!changed)return;Object.keys(work).forEach(k=>{if(!work[k].in&&work[k].rpe==null&&!work[k].in)work[k]={in:false}});e.att=work;dirty=true;changed=false};
-    bg.addEventListener("click",ev=>{
-      const t=ev.target.closest("[data-tg]"),r=ev.target.closest("[data-rp]");
-      if(t&&canEdit){const id=t.dataset.tg,cur=work[id]||{};const on=!cur.in;work[id]={in:on,rpe:on?(cur.rpe??null):null};changed=true;
-        const el=bg.querySelector(`[data-pr="${id}"]`);el.classList.toggle("on",on);t.setAttribute("aria-pressed",on);const rp=el.querySelector(".at-rpe");rp.hidden=!on;
-        if(!on)rp.querySelectorAll("button").forEach(b=>b.classList.remove("on"));
-        if(on&&rp.animate&&!reducedM())rp.animate([{opacity:0,transform:"translateY(-6px)"},{opacity:1,transform:"none"}],{duration:260,easing:"cubic-bezier(.22,1,.36,1)"});
-        if(navigator.vibrate)navigator.vibrate(8);upd();return}
-      if(r&&canEdit){const [id,v]=r.dataset.rp.split(":");const n=+v;const cur=work[id]||{in:true};cur.rpe=cur.rpe===n?null:n;cur.in=true;work[id]=cur;changed=true;
-        r.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===r&&cur.rpe===n));
-        if(r.animate&&!reducedM()&&cur.rpe===n)r.animate([{transform:"scale(.8)"},{transform:"scale(1.15)"},{transform:"scale(1)"}],{duration:280,easing:"cubic-bezier(.3,1.4,.5,1)"});upd();return}
+    const red=reducedM();
+    const setBadge=id=>{const b=bg.querySelector(`[data-op="${id}"] .at-rb`);const t=document.createElement("span");t.innerHTML=badge(work[id]);const nb=t.firstChild;b.replaceWith(nb);
+      if(!red&&nb.animate)nb.animate([{transform:"scale(.4)",opacity:0},{transform:"scale(1.18)",opacity:1,offset:.6},{transform:"scale(1)"}],{duration:380,easing:"cubic-bezier(.3,1.3,.5,1)"})};
+    const fold=(id,open)=>{const el=bg.querySelector(`[data-pr="${id}"]`);if(!el)return;const rp=el.querySelector(".at-rpe");
+      if(open){rp.hidden=false;el.classList.add("open");if(!red&&rp.animate)rp.animate([{opacity:0,maxHeight:"0px",paddingBottom:"0px"},{opacity:1,maxHeight:"60px",paddingBottom:"11px"}],{duration:280,easing:"cubic-bezier(.22,1,.36,1)"})}
+      else{el.classList.remove("open");if(red||!rp.animate){rp.hidden=true;return}
+        rp.animate([{opacity:1,maxHeight:rp.offsetHeight+"px",paddingBottom:"11px"},{opacity:0,maxHeight:"0px",paddingBottom:"0px"}],{duration:240,easing:"cubic-bezier(.4,0,.2,1)"}).onfinish=()=>{if(!el.classList.contains("open"))rp.hidden=true}}};
+    const commit=()=>{if(!changed)return;e.att=work;dirty=true;changed=false};
+    bg.addEventListener("click",ev=>{if(!canEdit)return;
+      const t=ev.target.closest("[data-tg]"),o=ev.target.closest("[data-op]"),r=ev.target.closest("[data-rp]");
+      if(t){const id=t.dataset.tg,cur=work[id]||{};const on=!cur.in;work[id]={in:on,rpe:on?(cur.rpe??null):null};changed=true;
+        const el=bg.querySelector(`[data-pr="${id}"]`);el.classList.toggle("on",on);t.setAttribute("aria-pressed",on);
+        if(!on){if(openP===id){fold(id,false);openP=null}el.querySelectorAll(".at-rpe button").forEach(b=>b.classList.remove("on"))}
+        setBadge(id);if(navigator.vibrate)navigator.vibrate(8);upd();return}
+      if(o){const id=o.dataset.op;if(!(work[id]&&work[id].in))return;
+        if(openP===id){fold(id,false);openP=null;return}
+        if(openP)fold(openP,false);openP=id;fold(id,true);return}
+      if(r){const [id,v]=r.dataset.rp.split(":");const n=+v;const cur=work[id]||{in:true};cur.in=true;cur.rpe=n;work[id]=cur;changed=true;
+        r.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===r));
+        if(!red&&r.animate)r.animate([{transform:"scale(.85)"},{transform:"scale(1.15)"},{transform:"scale(1)"}],{duration:220,easing:"cubic-bezier(.3,1.4,.5,1)"});
+        setTimeout(()=>{fold(id,false);if(openP===id)openP=null;setBadge(id)},170);upd();return}
     });
-    const all=q("#atAll");if(all)all.onclick=()=>{S.players.forEach(p=>{const c=work[p.id]||{};work[p.id]={in:true,rpe:c.rpe??null}});changed=true;
-      bg.querySelectorAll(".at-row").forEach(el=>{el.classList.add("on");el.querySelector(".at-rpe").hidden=false;el.querySelector("[data-tg]").setAttribute("aria-pressed","true")});upd()};
-    const none=q("#atNone");if(none)none.onclick=()=>{Object.keys(work).forEach(k=>delete work[k]);changed=true;
-      bg.querySelectorAll(".at-row").forEach(el=>{el.classList.remove("on");const rp=el.querySelector(".at-rpe");rp.hidden=true;rp.querySelectorAll("button").forEach(b=>b.classList.remove("on"));el.querySelector("[data-tg]").setAttribute("aria-pressed","false")});upd()};
     const close=()=>{commit();closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
     q("#atOk").onclick=close;q("#atX").onclick=close;
     bg.addEventListener("click",ev=>{if(ev.target===bg){commit();setTimeout(()=>{const y=window.scrollY;anim="";render();window.scrollTo(0,y)},260)}},true);
