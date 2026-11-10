@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794247787";
+const APP_V="1794320240";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -53,7 +53,7 @@ function cacheS(){try{localStorage.setItem("ab-cache",JSON.stringify(stripLogos(
 /* modifiche fatte senza connessione: restano sul telefono e partono appena torna la rete, anche dopo aver chiuso l'app */
 function setPending(on){try{on?localStorage.setItem("ab-pending","1"):localStorage.removeItem("ab-pending")}catch(_){}}
 function isPending(){try{return localStorage.getItem("ab-pending")==="1"}catch(_){return false}}
-function idleUI(){const a=document.activeElement;return !dirty&&!saving&&!document.getElementById("sheetbg")&&!document.getElementById("mOpen")&&!tEdit&&!(a&&a.matches&&a.matches("input,textarea,select"))}
+function idleUI(){const a=document.activeElement;return !dirty&&!saving&&!document.getElementById("sheetbg")&&!document.getElementById("mOpen")&&!document.getElementById("cvOpen")&&!tEdit&&!(a&&a.matches&&a.matches("input,textarea,select"))}
 async function loadData(force){
   if(!SB||!MYID)return;
   const {data,error}=await SB.from("app_state").select("data,updated_at").eq("id","main").maybeSingle();
@@ -141,6 +141,9 @@ function monthList(arr,emptyHTML){
 /* ---------- ALLENAMENTI: presenze e RPE ---------- */
 const RPEC=v=>v==null?"var(--muted)":`hsl(${Math.round(130-(v-1)*13.3)} 70% ${v>=8?46:42}%)`;
 const RPEL=["","Riposo","Molto facile","Facile","Moderato","Un po' duro","Duro","Molto duro","Durissimo","Quasi al massimo","Massimo"];
+/* ordine alfabetico per cognome (Salah Eddin resta sopra Marconcini) */
+const surKey=n=>{n=String(n||"");if(/salah eddin/i.test(n))return "machal";const i=n.indexOf(" ");return (i<0?n:n.slice(i+1)+" "+n.slice(0,i)).toLowerCase()};
+const bySur=(a,b)=>surKey(a.name).localeCompare(surKey(b.name),"it");
 function attOf(e){return e.att||{}}
 /* di default tutti presenti: si toglie la spunta solo a chi manca */
 function attRec(e,pid){const a=e.att;if(!a||!Object.keys(a).length)return {in:true,rpe:null};return a[pid]||{in:true,rpe:null}}
@@ -178,7 +181,7 @@ let presOpen=false;
 const PCTC=v=>v==null?"var(--muted)":`hsl(${Math.round(Math.max(0,Math.min(1,(v-.7)/.3))*125)} 68% 44%)`; /* 100% verde, 85% giallo, 70% o meno rosso */
 function presSection(){
   const rows=S.players.map(p=>{const a=playerAtt(p.id);return {p,tot:a.tot,pres:a.pres,ass:a.tot-a.pres,pct:a.tot?a.pres/a.tot:null}})
-    .sort((x,y)=>(y.pct??-1)-(x.pct??-1)||x.ass-y.ass||x.p.name.localeCompare(y.p.name));
+    .sort((x,y)=>(y.pct??-1)-(x.pct??-1)||x.ass-y.ass||bySur(x.p,y.p));
   if(!rows.length)return "";
   const ini=n=>{const w=n.trim().split(/\s+/);return (w[0][0]+(w[1]?w[1][0]:"")).toUpperCase()};
   const row=(r,i)=>`<div class="pr-row" style="--c:${PCTC(r.pct)};--rc:${RCOL[r.p.role]}">
@@ -213,8 +216,7 @@ function openAtt(id){
   const fresh=!e.att||!Object.keys(e.att).length;
   const work=Object.fromEntries(S.players.map(p=>[p.id,{...attRec(e,p.id)}]));
   let changed=false, openP=null;
-  const sur=n=>{if(/salah eddin/i.test(n))return "machal"; /* va prima di Marconcini */const i=n.indexOf(" ");return (i<0?n:n.slice(i+1)+" "+n.slice(0,i)).toLowerCase()};
-  const srt=(a,b)=>sur(a.name).localeCompare(sur(b.name),"it"); /* ordine alfabetico per cognome */
+  const srt=bySur;
   const d=pd(e.date);
   const head=()=>{const ids=S.players.map(p=>p.id),pres=ids.filter(i=>work[i]&&work[i].in),rp=pres.map(i=>work[i].rpe).filter(v=>v!=null),m=rp.length?rp.reduce((x,y)=>x+y,0)/rp.length:null;
     return `<div class="at-sum"><div><b>${pres.length}<i>/${ids.length}</i></b><small>Presenti</small></div><div><b style="color:${RPEC(m==null?null:Math.round(m))}">${m==null?"–":m.toFixed(1)}</b><small>RPE medio</small></div><div><b>${rp.length}<i>/${pres.length}</i></b><small>RPE inseriti</small></div></div>`};
@@ -409,9 +411,10 @@ function openEvent(id,fromEl){
       ${row("<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z\"/><circle cx=\"12\" cy=\"9.5\" r=\"2.5\"/></svg>","Dove",esc(e.place||""))}
       ${isM?row("<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7l4 3-1.5 5h-5L8 10z\"/></svg>","Partita",esc((e.note&&/^Giornata/.test(e.note)?e.note+" · ":"")+(e.home?"in casa":"in trasferta")+" contro "+e.opponent)):""}
       ${isM&&tactic?row("<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3.5\" y=\"3\" width=\"17\" height=\"18\" rx=\"2.5\"/><path d=\"M8 8l3 3M11 8l-3 3\"/><circle cx=\"15.5\" cy=\"15.5\" r=\"2\"/></svg>","Formazione",esc(tactic.periods?tactic.periods.map((p,i)=>(i+1)+"° "+p.module).join(" · "):"Modulo "+tactic.module)):""}
+      ${isM?convRow(e):""}
       ${!(isM&&/^Giornata/.test(e.note||""))?row("<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 20h4L19 9l-4-4L4 16z\"/><path d=\"M14 6l4 4\"/></svg>","Note",esc(e.note||"")):""}
     </div>
-    <div class="evo-act">${canEdit?`<button class="btn" id="evEdit">Modifica</button>`:""}${isM?`<button class="btn primary" id="evTac">Prepara la formazione</button>`:""}<button class="btn" id="evClose">Chiudi</button></div>
+    <div class="evo-act">${canEdit?`<button class="btn" id="evEdit">Modifica</button>`:""}${isM?`<button class="btn primary" id="evConv">Convocazioni</button>`:""}<button class="btn" id="evClose">Chiudi</button></div>
   </div>`;
   document.body.appendChild(ov);lockScroll(true);
   const box=ov.querySelector(".evo-in");
@@ -428,8 +431,53 @@ function openEvent(id,fromEl){
   ov.addEventListener("click",ev=>{if(ev.target===ov)close()});
   ov.querySelector("#evClose").onclick=close;ov.querySelector(".evo-back").onclick=close;
   const eb=ov.querySelector("#evEdit");if(eb)eb.onclick=()=>{ov.remove();lockScroll(false);editEvent(e.id)};
-  const tb=ov.querySelector("#evTac");if(tb)tb.onclick=()=>{ov.remove();lockScroll(false);tMatch=e.id;goTab("tattica")};
+  const cb=ov.querySelector("#evConv");if(cb)cb.onclick=()=>openConv(e.id);
   ov.querySelector("#evClose").focus({preventScroll:true});
+}
+/* ---------- CONVOCAZIONI ---------- */
+/* di default tutti convocati: in e.nc restano solo gli esclusi */
+let cvT=null;
+const TICK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function convSplit(e){const nc=new Set(e.nc||[]),all=S.players.slice().sort(bySur);return {all,yes:all.filter(p=>!nc.has(p.id)),no:all.filter(p=>nc.has(p.id))}}
+function convToggle(e,pid){const s=new Set(e.nc||[]);s.has(pid)?s.delete(pid):s.add(pid);const l=[...s].filter(id=>S.players.some(p=>p.id===id));if(l.length)e.nc=l;else delete e.nc;dirty=true;return !s.has(pid)}
+function convCount(c){return `${c.yes.length}<i>/${c.all.length}</i>`}
+function convView(e){const c=convSplit(e);if(!c.all.length)return "";
+  return `<div class="card cv-card"><div class="cv-h"><span>Convocati</span><b>${convCount(c)}</b></div>
+    ${c.yes.length?`<ul class="cv-ul">${c.yes.map(p=>`<li><span>${nameHTML(p.name)}</span></li>`).join("")}</ul>`:'<p class="ev-sub">Nessun convocato.</p>'}
+    ${c.no.length?`<div class="cv-no"><div class="cv-h"><span>Non convocati</span><b>${c.no.length}</b></div><ul class="cv-ul">${c.no.map(p=>`<li><span>${nameHTML(p.name)}</span></li>`).join("")}</ul></div>`:""}</div>`}
+function convEditHTML(e){const c=convSplit(e),nc=new Set(e.nc||[]);if(!c.all.length)return "";
+  return `<div class="card cv-card edit"><div class="cv-h"><span>Convocati</span><b id="cvN">${convCount(c)}</b></div>
+    <p class="ev-sub cv-help">Togli la spunta a chi non è convocato.</p>
+    <div class="at-list">${c.all.map(p=>{const on=!nc.has(p.id);return `<button class="at-row cv-row ${on?"on":""}" data-cv="${p.id}" aria-pressed="${on}" style="--sc:${on?"var(--win)":"var(--loss)"}"><span class="at-ck" aria-hidden="true">${TICK}</span><span class="at-nm">${nameHTML(p.name)}</span></button>`}).join("")}</div></div>`}
+function bindConv(root,e,after){root.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{if(!canEdit)return;
+  const on=convToggle(e,b.dataset.cv);b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);b.style.setProperty("--sc",on?"var(--win)":"var(--loss)");
+  const n=root.querySelector("#cvN");if(n)n.innerHTML=convCount(convSplit(e));if(navigator.vibrate)navigator.vibrate(8);after&&after()})}
+function convRow(e){const c=convSplit(e);if(!c.all.length)return "";
+  return `<div class="drow"><span class="dic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M9 2.5h6v3H9z"/></svg></span><div><small>Convocati</small><div>${c.no.length?`${c.yes.length} su ${c.all.length}`:`Tutti (${c.all.length})`}</div>${c.no.length?`<p class="cv-out"><em>Non convocati</em>${c.no.map(p=>nameHTML(p.name)).join(", ")}</p>`:""}</div></div>`}
+function openConv(id){
+  const e=S.events.find(x=>x.id===id);if(!e)return;
+  let edit=false;const red=reducedM();
+  const old=$("#cvOpen");if(old)old.remove();
+  const ov=document.createElement("div");ov.className="evo cvo";ov.id="cvOpen";document.body.appendChild(ov);lockScroll(true);
+  const fadeIn=(from)=>{if(red)return;const b=ov.querySelector(".evo-in");[...b.children].slice(from).forEach((el,i)=>el.animate([{opacity:0,transform:"translateY(14px)"},{opacity:1,transform:"none"}],{duration:400,delay:i*55,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"}))};
+  const close=()=>{ov.id="";autosave();const y=window.scrollY;anim="";render();window.scrollTo(0,y);
+    if($("#evOpen"))openEvent(e.id);else lockScroll(false);
+    if(red||!ov.animate){ov.remove();return}
+    ov.animate([{opacity:1},{opacity:0}],{duration:220,easing:"ease",fill:"forwards"}).onfinish=()=>ov.remove();
+    const b=ov.querySelector(".evo-in");b&&b.animate([{transform:"none"},{transform:"translateY(14px) scale(.97)"}],{duration:220,easing:"ease-in",fill:"forwards"})};
+  const draw=(first)=>{const d=pd(e.date);
+    ov.innerHTML=`${canEdit?`<button class="evo-edit ${edit?"on":""}" id="cv_mode">${edit?"Fine":"Modifica"}</button>`:""}<button class="evo-back" aria-label="Indietro"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="evo-in" role="dialog" aria-modal="true" aria-label="Convocazioni">
+      <div class="cv-top">${crestImg(e.opponent,false)}<div><small>Convocazioni</small><b>vs ${esc(e.opponent)}</b><span>${esc(dayLabel(e.date))}, ore ${esc(e.time)} · ${e.home?"in casa":"in trasferta"}</span></div></div>
+      ${edit?convEditHTML(e):convView(e)}
+      <div class="evo-act">${edit?'<button class="btn primary" id="cv_done">Fatto</button>':'<button class="btn" id="cv_close">Chiudi</button>'}</div></div>`;
+    if(!first)ov.classList.add("static");
+    const q=x=>ov.querySelector(x);
+    q(".evo-back").onclick=close;const c=q("#cv_close");if(c)c.onclick=close;
+    const tog=()=>{edit=!edit;ov.scrollTop=0;draw();fadeIn(1)};
+    const m=q("#cv_mode");if(m)m.onclick=tog;const dn=q("#cv_done");if(dn)dn.onclick=tog;
+    if(edit)bindConv(ov,e,autosave)};
+  draw(true);fadeIn(0);
+  ov.addEventListener("click",ev=>{if(ev.target===ov)close()});
 }
 /* ---------- SCHEDA PARTITA GIOCATA ---------- */
 let mMenuNew=false, mEdit=false, mOpen=null, mMenu=false, mScoreEdit=false, mPick=null, mNew=null, mPickNew=false, mSeNew=false;
@@ -467,6 +515,7 @@ function matchSheetHTML(e){
     </div>
     ${scoreEditor}
     <div class="card pers"><div class="pers-h"><span>Tempi</span><small>${esc(Hn)} – ${esc(An)}</small></div>${P.map(per).join("")}</div>
+    ${can?convEditHTML(e):convView(e)}
     <div class="evo-act">${dirty&&canEdit?`<button class="btn bib" id="m_save">${saving?"Salvo…":"Salva"}</button>`:""}<button class="btn" id="m_close">Chiudi</button></div>
   </div>`;
 }
@@ -518,6 +567,7 @@ function drawMatch(){
   const mm=q("#m_mode");if(mm)mm.onclick=()=>{mEdit=!mEdit;mMenu=false;mPick=null;mScoreEdit=mEdit&&!played(e);mSeNew=mScoreEdit;ov.classList.remove("static");ov.dataset.drawn="";drawMatch();
     const b=ov.querySelector(".evo-in");if(b&&b.animate&&!matchMedia("(prefers-reduced-motion: reduce)").matches)[...b.children].slice(1).forEach((el,i)=>el.animate([{opacity:0,transform:"translateY(10px)"},{opacity:1,transform:"none"}],{duration:380,delay:i*50,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"}))};
   if(!canEdit||!mEdit)return;
+  bindConv(ov,e,()=>{clearTimeout(cvT);cvT=setTimeout(()=>{if(mOpen!==e.id)return;render();if(!ov.querySelector("#m_save"))drawMatch()},340)});
   const pres=q(".mpres");pres.classList.add("tap");pres.onclick=()=>{if(mScoreEdit)return;
     const red=matchMedia("(prefers-reduced-motion: reduce)").matches;
     if(mMenu){const mn=q(".mmenu");if(mn&&mn.animate&&!red){mn.animate([{maxHeight:mn.offsetHeight+"px",opacity:1,transform:"none"},{maxHeight:"0px",opacity:0,transform:"translateY(-8px) scale(.96)"}],{duration:260,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"}).onfinish=()=>{mMenu=false;drawMatch()};return}mMenu=false;drawMatch();return}
@@ -697,7 +747,7 @@ function bindRosa(){
 /* ---------- MARCATORI ---------- */
 function vMarcatori(){
   const g=goalsMap();
-  const list=Object.entries(g).map(([id,n])=>({id,n,name:pname(id),num:(S.players.find(p=>p.id===id)||{}).num})).sort((a,b)=>b.n-a.n||a.name.localeCompare(b.name));
+  const list=Object.entries(g).map(([id,n])=>({id,n,name:pname(id),num:(S.players.find(p=>p.id===id)||{}).num})).sort((a,b)=>b.n-a.n||bySur(a,b));
   const pl=S.events.filter(played);
   const gf=pl.reduce((s,e)=>s+(+e.gf||0),0), ga=pl.reduce((s,e)=>s+(+e.ga||0),0);
   const max=list[0]?list[0].n:1;
