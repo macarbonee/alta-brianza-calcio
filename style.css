@@ -1245,3 +1245,18 @@ body{overflow-anchor:none}
 .cv-out{margin:6px 0 0;font:500 13.5px var(--f-ui);color:var(--loss);line-height:1.45}
 .cv-out em{display:block;font:700 11px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;font-style:normal;opacity:.85}
 .cv-out .sur{font-weight:800}
+
+/* RPE: i numeri escono sotto il nome e tornano su */
+.at-pick{position:static;inset:auto;z-index:auto;display:none;opacity:1;visibility:visible;transform:none;transition:none;background:none;border-radius:0;padding:0 8px 13px 14px;gap:6px;will-change:auto}
+.at-row.open .at-pick{display:flex;opacity:1;visibility:visible;transform:none;transition:none}
+.at-row.closing .at-pick{display:flex;position:absolute;left:4px;right:0;top:100%;z-index:3;pointer-events:none}
+.at-pick .at-rpe button,.at-row.open .at-pick .at-rpe button{opacity:1;transform:none;transition:background .2s,color .2s;transition-delay:0s}
+.at-row.open .at-pick .at-rpe button.on{transform:scale(1.1)}
+@media (prefers-reduced-motion: no-preference){
+  .at-row.open .at-pick .at-rpe button{animation:rpeIn .44s cubic-bezier(.3,1.55,.5,1) backwards;animation-delay:calc(60ms + var(--i) * 24ms)}
+  .at-row.open .at-pick .at-pk-x{animation:rpeIn .4s cubic-bezier(.3,1.55,.5,1) .3s backwards}
+  .at-row.closing .at-pick .at-rpe button{animation:rpeOut .3s cubic-bezier(.5,0,.75,.4) forwards;animation-delay:calc((9 - var(--i)) * 13ms)}
+  .at-row.closing .at-pick .at-pk-x{animation:rpeOut .2s ease-in forwards}
+  @keyframes rpeIn{from{opacity:0;transform:translateY(-26px) scale(.35)}}
+  @keyframes rpeOut{to{opacity:0;transform:translateY(-34px) scale(.35)}}
+}

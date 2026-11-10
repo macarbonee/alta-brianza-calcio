@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794321097";
+const APP_V="1794321533";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -241,8 +241,21 @@ function openAtt(id){
       if(pop&&!red&&nb.animate)nb.animate([{transform:"scale(.6)",opacity:0},{transform:"scale(1.08)",opacity:1,offset:.6},{transform:"scale(1)"}],{duration:420,easing:"cubic-bezier(.22,1,.36,1)"});return nb};
     /* la tendina dei numeri si apre e chiude con una transizione CSS (fluida anche su iPhone) */
     /* i numeri compaiono sopra la targhetta stessa: niente cambi di altezza, quindi fluido anche con tanti giocatori */
-    const fold=(id,open)=>{const el=bg.querySelector(`[data-pr="${id}"]`);if(!el)return;el.classList.toggle("open",open);
+    /* i numeri escono sotto il nome: la riga si allunga in un colpo e le righe sotto scivolano
+       con il solo spostamento (niente ricalcoli a ogni fotogramma, quindi fluido su iPhone) */
+    const setP=(id,open)=>{const el=bg.querySelector(`[data-pr="${id}"]`);if(!el||el.classList.contains("open")===open)return;
+      el.classList.toggle("open",open);clearTimeout(el._ct);
+      if(open)el.classList.remove("closing");else if(!red){el.classList.add("closing");el._ct=setTimeout(()=>el.classList.remove("closing"),440)}
       const pk=el.querySelector(".at-pick");pk.setAttribute("aria-hidden",!open);pk.querySelectorAll("button").forEach(b=>b.tabIndex=open?0:-1)};
+    const flip=(mut,opening)=>{if(red){mut();return}
+      const els=[...bg.querySelectorAll(".at-row")];let n=bg.querySelector(".at-list").nextElementSibling;while(n){els.push(n);n=n.nextElementSibling}
+      const tops=els.map(x=>x.getBoundingClientRect().top);
+      els.forEach(x=>{if(x._fa){x._fa.cancel();x._fa=null}});
+      mut();
+      els.forEach((x,i)=>{const d=tops[i]-x.getBoundingClientRect().top;if(Math.abs(d)<.5||!x.animate)return;
+        x._fa=x.animate([{transform:`translateY(${d}px)`},{transform:"none"}],{duration:opening?480:430,easing:opening?"cubic-bezier(.25,1.3,.4,1)":"cubic-bezier(.22,1,.36,1)"});x._fa.onfinish=()=>{x._fa=null}})};
+    const fold=(id,open)=>{flip(()=>setP(id,open),open);
+      if(open){const el=bg.querySelector(`[data-pr="${id}"]`);setTimeout(()=>{const sc=el.closest(".sheet")||bg,r=el.getBoundingClientRect(),v=sc.getBoundingClientRect();if(r.bottom>v.bottom-90&&el.scrollIntoView)el.scrollIntoView({block:"center",behavior:"smooth"})},60)}};
     /* il numero scelto "vola" nel riquadro RPE accanto al nome */
     const fly=(btn,id)=>{const el=bg.querySelector(`[data-pr="${id}"]`);const old=el.querySelector(".at-rb");
       if(red||!btn.animate){setBadge(id,false);return}
@@ -262,10 +275,11 @@ function openAtt(id){
         setBadge(id);if(navigator.vibrate)navigator.vibrate(8);upd();commit();autosave();return}
       if(o){const id=o.dataset.op;if(!(work[id]&&work[id].in))return;
         if(openP===id){fold(id,false);openP=null;return}
-        if(openP)fold(openP,false);openP=id;fold(id,true);return}
+        if(openP){const o=openP;openP=id;flip(()=>{setP(o,false);setP(id,true)},true);return}
+        openP=id;fold(id,true);return}
       if(r){const [id,v]=r.dataset.rp.split(":");const n=+v;const cur=work[id]||{in:true};cur.in=true;cur.rpe=n;work[id]=cur;changed=true;
         r.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===r));
-        fold(id,false);if(openP===id)openP=null;fly(r,id);upd();commit();autosave();return}
+        fly(r,id);fold(id,false);if(openP===id)openP=null;upd();commit();autosave();return}
     });
     const close=()=>{commit();closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
     q("#atOk").onclick=close;q("#atX").onclick=close;
