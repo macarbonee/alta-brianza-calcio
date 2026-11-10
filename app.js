@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794320521";
+const APP_V="1794320803";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -453,7 +453,7 @@ function bindConv(root,e,after){root.querySelectorAll("[data-cv]").forEach(b=>b.
   const on=convToggle(e,b.dataset.cv);b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);b.style.setProperty("--sc",on?"var(--win)":"var(--loss)");
   const n=root.querySelector("#cvN");if(n)n.innerHTML=convCount(convSplit(e));if(navigator.vibrate)navigator.vibrate(8);after&&after()})}
 function convRow(e){const c=convSplit(e);if(!c.all.length)return "";
-  return `<div class="drow"><span class="dic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M9 2.5h6v3H9z"/></svg></span><div><small>Convocati</small><div>${c.no.length?`${c.yes.length} su ${c.all.length}`:`Tutti (${c.all.length})`}</div>${c.no.length?`<p class="cv-out"><em>Non convocati</em>${c.no.map(p=>nameHTML(p.name)).join(", ")}</p>`:""}</div></div>`}
+  return `<div class="drow cv-drow"><span class="dic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="4" y="4" width="16" height="17" rx="2.5"/><path d="M9 2.5h6v3H9z"/></svg></span><div><small>Convocati</small><div>${c.no.length?`${c.yes.length} su ${c.all.length}`:`Tutti (${c.all.length})`}</div>${c.no.length?`<p class="cv-out"><em>Non convocati</em>${c.no.map(p=>nameHTML(p.name)).join(", ")}</p>`:""}</div></div>`}
 function openConv(id,fromEl){
   const e=S.events.find(x=>x.id===id);if(!e)return;
   let edit=false;const red=reducedM()||!document.body.animate,E="cubic-bezier(.22,1,.36,1)";
@@ -473,18 +473,22 @@ function openConv(id,fromEl){
     const ed=q(".evo-edit");if(ed)ed.animate([{opacity:0,transform:"translateX(12px) scale(.9)"},{opacity:1,transform:"none"}],{duration:420,delay:160,easing:E,fill:"backwards"});
     stagger(210)};
   /* chiusura: l'elenco scende, l'intestazione si rimpicciolisce dentro il tasto da cui era uscita */
-  const close=()=>{if(!ov.id)return;ov.id="";autosave();const y=window.scrollY;anim="";render();window.scrollTo(0,y);
-    if($("#evOpen"))openEvent(e.id);else lockScroll(false);
-    if(red){ov.remove();return}
+  const close=()=>{if(!ov.id)return;ov.id="";autosave();
+    /* niente lavoro pesante prima di animare: sotto si aggiorna solo la riga "Convocati", il resto a fine animazione */
+    const under=$("#evOpen"),rowEl=under&&under.querySelector(".cv-drow");if(rowEl)rowEl.outerHTML=convRow(e);
+    if(!under)lockScroll(false);
+    const done=()=>{ov.remove();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
+    if(red){done();return}
     ov.style.pointerEvents="none";
-    const top=q(".cv-top"),btn=document.querySelector("#evOpen #evConv");
-    ov.querySelectorAll(".cv-card,.evo-act,.evo-back,.evo-edit").forEach(el=>el.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(34px) scale(.96)"}],{duration:250,easing:"cubic-bezier(.5,0,.9,.5)",fill:"forwards"}));
+    const top=q(".cv-top"),btn=under&&under.querySelector("#evConv");
+    ov.querySelectorAll(".cv-card,.evo-act,.evo-back,.evo-edit").forEach(el=>el.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(44px) scale(.95)"}],{duration:300,easing:"cubic-bezier(.4,0,.8,.4)",fill:"forwards"}));
     if(btn){const r=btn.getBoundingClientRect(),c=top.getBoundingClientRect();
-      [...top.children].forEach(el=>el.animate([{opacity:1},{opacity:0}],{duration:170,fill:"forwards"}));
-      top.animate([{transform:"none",opacity:1},{transform:`translate(${r.left-c.left}px,${r.top-c.top}px) scale(${r.width/c.width},${r.height/c.height})`,opacity:.5,borderRadius:"14px"}],{duration:460,delay:40,easing:"cubic-bezier(.5,0,.15,1)",fill:"forwards"});
-      btn.animate([{transform:"scale(1)"},{transform:"scale(1.07)"},{transform:"scale(1)"}],{duration:340,delay:430,easing:"cubic-bezier(.3,.7,.4,1.4)"})}
-    else top.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-16px) scale(.95)"}],{duration:250,easing:"ease-in",fill:"forwards"});
-    ov.animate([{opacity:1},{opacity:1,offset:.6},{opacity:0}],{duration:520,easing:"ease",fill:"forwards"}).onfinish=()=>ov.remove()};
+      [...top.children].forEach(el=>el.animate([{opacity:1},{opacity:0}],{duration:200,fill:"forwards"}));
+      top.animate([{transform:"none",opacity:1},{transform:`translate(${r.left-c.left}px,${r.top-c.top}px) scale(${r.width/c.width},${r.height/c.height})`,opacity:.6}],{duration:520,delay:60,easing:"cubic-bezier(.5,0,.15,1)",fill:"forwards"});
+      btn.animate([{transform:"scale(1)"},{transform:"scale(1.08)"},{transform:"scale(1)"}],{duration:360,delay:520,easing:"cubic-bezier(.3,.7,.4,1.4)"})}
+    else top.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-18px) scale(.95)"}],{duration:300,easing:"ease-in",fill:"forwards"});
+    const fin=ov.animate([{opacity:1},{opacity:1,offset:.7},{opacity:0}],{duration:640,easing:"ease",fill:"forwards"});
+    let ended=false;const end=()=>{if(ended)return;ended=true;done()};fin.onfinish=end;setTimeout(end,760)};
   const draw=first=>{
     ov.innerHTML=`${canEdit?`<button class="evo-edit ${edit?"on":""}" id="cv_mode">${edit?"Fine":"Modifica"}</button>`:""}<button class="evo-back" aria-label="Indietro"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="evo-in" role="dialog" aria-modal="true" aria-label="Convocazioni">
       <div class="cv-top">${crestImg(e.opponent,false)}<div><small>Convocazioni</small><b>vs ${esc(e.opponent)}</b><span>${esc(dayLabel(e.date))}, ore ${esc(e.time)} · ${e.home?"in casa":"in trasferta"}</span></div></div>
