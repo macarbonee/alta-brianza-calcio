@@ -1260,3 +1260,9 @@ body{overflow-anchor:none}
   @keyframes rpeIn{from{opacity:0;transform:translateY(-26px) scale(.35)}}
   @keyframes rpeOut{to{opacity:0;transform:translateY(-34px) scale(.35)}}
 }
+
+/* RPE: riquadri dei numeri più grandi, su due file da cinque */
+.at-pick{padding:2px 8px 14px 14px;gap:8px}
+.at-pick .at-rpe{grid-template-columns:repeat(5,1fr);gap:7px}
+.at-pick .at-rpe button{aspect-ratio:auto;height:46px;border-radius:14px;font-size:18px}
+.at-pk-x{width:32px;height:32px}

@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794321533";
+const APP_V="1794411457";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -1189,7 +1189,11 @@ function bind(){
   document.querySelectorAll("[data-att]").forEach(b=>b.onclick=()=>openAtt(b.dataset.att));
   bindPres();
   document.querySelectorAll("[data-match]").forEach(el=>el.onclick=()=>openMatch(el.dataset.match,el));
-  document.querySelectorAll("[data-open]").forEach(el=>{el.onclick=()=>openEvent(el.dataset.open,el);el.onkeydown=k=>{if(k.key==="Enter"||k.key===" "){k.preventDefault();openEvent(el.dataset.open,el)}}});
+  /* un allenamento porta nella sezione Allenamenti e apre subito presenze e RPE */
+  const openEv=el=>{const ev=S.events.find(x=>x.id===el.dataset.open);
+    if(ev&&ev.type!=="partita"){goTab("allenamenti");setTimeout(()=>openAtt(ev.id),reducedM()?0:340);return}
+    openEvent(el.dataset.open,el)};
+  document.querySelectorAll("[data-open]").forEach(el=>{el.onclick=()=>openEv(el);el.onkeydown=k=>{if(k.key==="Enter"||k.key===" "){k.preventDefault();openEv(el)}}});
   bindTattica();
   bindRosa();
 }
