@@ -1279,3 +1279,7 @@ body{overflow-anchor:none}
 .tr-tile.pri .tr-ic{background:rgba(255,255,255,.16);color:#fff}
 .tr-tile.pri small{color:rgba(255,255,255,.82)}
 .toast{z-index:60}
+/* tocchi sempre presi al primo colpo: niente attesa del doppio tocco per lo zoom,
+   e i pannelli che stanno sparendo non intercettano più i tocchi */
+*{touch-action:manipulation}
+.sheet-bg.out{pointer-events:none}

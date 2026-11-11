@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794411919";
+const APP_V="1794412126";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -464,12 +464,12 @@ function openTrain(id,fromEl){
     ${heroCard(e,false,true)}<div class="tr-tiles">${trainTiles(e)}</div></div>`;
   document.body.appendChild(ov);lockScroll(true);
   const q=x=>ov.querySelector(x),card=q(".next");card.style.transformOrigin="0 0";
-  if(!red){
-    if(fromEl){const r=fromEl.getBoundingClientRect(),c=card.getBoundingClientRect();
+  if(!red)try{
+    if(fromEl&&fromEl.isConnected){const r=fromEl.getBoundingClientRect(),c=card.getBoundingClientRect();
       card.animate([{transform:`translate(${r.left-c.left}px,${r.top-c.top}px) scale(${r.width/c.width},${r.height/c.height})`},{transform:"none"}],{duration:540,easing:E})}
     else card.animate([{opacity:0,transform:"translateY(-16px) scale(.96)"},{opacity:1,transform:"none"}],{duration:440,easing:E});
     ov.querySelectorAll(".tr-tile").forEach((el,i)=>el.animate([{opacity:0,transform:"translateY(34px) scale(.9)"},{opacity:1,transform:"none"}],{duration:500,delay:170+i*80,easing:"cubic-bezier(.25,1.3,.4,1)",fill:"backwards"}));
-    const ed=q(".evo-edit");if(ed)ed.animate([{opacity:0,transform:"translateX(12px) scale(.9)"},{opacity:1,transform:"none"}],{duration:420,delay:160,easing:E,fill:"backwards"})}
+    const ed=q(".evo-edit");if(ed)ed.animate([{opacity:0,transform:"translateX(12px) scale(.9)"},{opacity:1,transform:"none"}],{duration:420,delay:160,easing:E,fill:"backwards"})}catch(_){}
   /* chiusura: i tasti scendono e il riquadro torna nella riga da cui era partito */
   const close=()=>{if(!ov.id)return;ov.id="";lockScroll(false);if(red){ov.remove();return}
     ov.style.pointerEvents="none";
