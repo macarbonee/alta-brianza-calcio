@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794412126";
+const APP_V="1794412501";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -1027,7 +1027,7 @@ function sheet(html,onMount,pre){
   const bg=document.createElement("div");bg.className="sheet-bg";bg.id="sheetbg";
   bg.innerHTML=`${pre?`<div class="pv-wrap">${pre}</div>`:""}<div class="sheet" role="dialog" aria-modal="true" tabindex="-1">${html}</div>`;
   bg.addEventListener("click",e=>{if(e.target===bg)closeSheet()});
-  document.body.appendChild(bg);onMount&&onMount(bg);
+  document.body.appendChild(bg);lockScroll(true);onMount&&onMount(bg);
   /* niente tastiera all'apertura: il fuoco va al pannello, non a un campo */
   const sh=bg.querySelector(".sheet");sh.focus({preventScroll:true});
   /* quando compare la tastiera, il pannello sale sopra di lei */
@@ -1045,6 +1045,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 function unswipeAll(){document.querySelectorAll(".plw.swiped").forEach(w=>{w.classList.remove("swiped");const c=w.querySelector(".pl");if(c){c.classList.remove("dragging");c.style.transform=""}
   const d=w.querySelector(".pl-act.del");if(d){d.classList.remove("confirm");d.querySelector("span").textContent="Elimina"}})}
 function closeSheet(){unswipeAll();const b=$("#sheetbg");if(!b)return;b.id="";b._off&&b._off();setTimeout(autosave,0);
+  if(!document.querySelector("#evOpen,#mOpen,#cvOpen,#trOpen"))lockScroll(false);
   const pv=b.querySelector(".pv-wrap");if(pv)pv.remove();
   if(matchMedia("(prefers-reduced-motion: reduce)").matches){b.remove();return}
   b.classList.add("out");setTimeout(()=>b.remove(),240)}
@@ -1063,14 +1064,20 @@ function editEvent(id,newType){
     <div style="display:flex;flex-direction:column;gap:14px">
      <div class="grid2"><label class="field">Avversario<input id="f_opp" value="${esc(e.opponent||"")}"></label>
      <label class="field">Dove<select id="f_home"><option value="1" ${e.home!==false?"selected":""}>In casa</option><option value="0" ${e.home===false?"selected":""}>In trasferta</option></select></label></div>
+     <div id="resFields" style="display:flex;flex-direction:column;gap:14px">
      <div class="grid2"><label class="field">Gol ${esc(S.team)}<input type="number" min="0" inputmode="numeric" id="f_gf" value="${e.gf??""}" placeholder="—"></label><label class="field">Gol avversari<input type="number" min="0" inputmode="numeric" id="f_ga" value="${e.ga??""}" placeholder="—"></label></div>
      <div class="field">Marcatori<div class="scorers">${scorers||'<span class="ev-sub">Aggiungi prima i giocatori nella Rosa.</span>'}</div></div>
+     </div>
     </div>
    </div>
    <label class="field">Note<input id="f_note" value="${esc(e.note||"")}" placeholder="Es. ritrovo 9:15, portare borraccia"></label>
    <div class="sheet-actions">${isNew?"<span></span>":'<button class="btn danger" id="del">Elimina</button>'}<div><button class="btn" id="cancel">Annulla</button><button class="btn primary" id="ok">Fatto</button></div></div>`,
   bg=>{
-    const sync=()=>{bg.querySelector("#matchFields").hidden=!bg.querySelector("#ty_p").checked};sync();
+    const nowT=new Date().toTimeString().slice(0,5);
+    const sync=()=>{bg.querySelector("#matchFields").hidden=!bg.querySelector("#ty_p").checked;
+      const d=bg.querySelector("#f_date").value,t=bg.querySelector("#f_time").value||"00:00";
+      bg.querySelector("#resFields").hidden=!(played(e)||d<todayISO||(d===todayISO&&t<=nowT))};sync();
+    bg.querySelector("#f_date").addEventListener("change",sync);bg.querySelector("#f_time").addEventListener("change",sync);
     bg.querySelectorAll('input[name=type]').forEach(r=>r.addEventListener("change",sync));
     bg.querySelector("#cancel").onclick=closeSheet;
     const del=bg.querySelector("#del"); if(del) del.onclick=()=>{if(del.dataset.c){S.events=S.events.filter(x=>x.id!==e.id);closeSheet();changed()}else{del.dataset.c=1;del.textContent="Conferma eliminazione"}};

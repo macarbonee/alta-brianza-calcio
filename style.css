@@ -1283,3 +1283,10 @@ body{overflow-anchor:none}
    e i pannelli che stanno sparendo non intercettano più i tocchi */
 *{touch-action:manipulation}
 .sheet-bg.out{pointer-events:none}
+
+/* pannelli: scorrimento fluido, che non trascina la pagina sotto, con i tasti sempre a portata */
+.sheet{max-height:88dvh;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-padding-bottom:90px}
+.sheet-bg{overscroll-behavior:contain}
+.sheet .sheet-actions{position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom,0px));z-index:4;margin:0 calc(-1 * max(18px,env(safe-area-inset-right,0px))) calc(-18px - env(safe-area-inset-bottom,0px));
+  padding:12px max(18px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  background:linear-gradient(180deg,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface) 18px);}
