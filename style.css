@@ -1266,3 +1266,16 @@ body{overflow-anchor:none}
 .at-pick .at-rpe{grid-template-columns:repeat(5,1fr);gap:7px}
 .at-pick .at-rpe button{aspect-ratio:auto;height:46px;border-radius:14px;font-size:18px}
 .at-pk-x{width:32px;height:32px}
+
+/* ---------- schermata allenamento ---------- */
+.tr-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tr-tile{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;padding:16px 14px 15px;border-radius:22px;border:1px solid var(--card-border);background:var(--surface);color:var(--ink);text-align:left;cursor:pointer;font:inherit;box-shadow:0 10px 26px rgba(8,16,60,.22);-webkit-tap-highlight-color:transparent;transition:transform .18s cubic-bezier(.3,.7,.4,1.4)}
+.tr-tile:active{transform:scale(.95)}
+.tr-tile:focus-visible{outline:3px solid var(--bib);outline-offset:2px}
+.tr-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;margin-bottom:10px;background:var(--chip);color:var(--pitch)}
+.tr-tile b{font:700 16.5px/1.2 var(--f-ui);letter-spacing:-.01em}
+.tr-tile small{font:500 12.5px var(--f-ui);color:var(--muted);overflow-wrap:anywhere}
+.tr-tile.pri{background:linear-gradient(145deg,#3557dc,#1b2f8f 55%,#0d1a58);color:#fff;border-color:transparent;box-shadow:0 12px 28px rgba(8,16,60,.38),inset 0 1px 0 rgba(255,255,255,.22)}
+.tr-tile.pri .tr-ic{background:rgba(255,255,255,.16);color:#fff}
+.tr-tile.pri small{color:rgba(255,255,255,.82)}
+.toast{z-index:60}

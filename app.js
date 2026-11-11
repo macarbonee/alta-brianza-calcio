@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794411457";
+const APP_V="1794411919";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -53,7 +53,7 @@ function cacheS(){try{localStorage.setItem("ab-cache",JSON.stringify(stripLogos(
 /* modifiche fatte senza connessione: restano sul telefono e partono appena torna la rete, anche dopo aver chiuso l'app */
 function setPending(on){try{on?localStorage.setItem("ab-pending","1"):localStorage.removeItem("ab-pending")}catch(_){}}
 function isPending(){try{return localStorage.getItem("ab-pending")==="1"}catch(_){return false}}
-function idleUI(){const a=document.activeElement;return !dirty&&!saving&&!document.getElementById("sheetbg")&&!document.getElementById("mOpen")&&!document.getElementById("cvOpen")&&!tEdit&&!(a&&a.matches&&a.matches("input,textarea,select"))}
+function idleUI(){const a=document.activeElement;return !dirty&&!saving&&!document.getElementById("sheetbg")&&!document.getElementById("mOpen")&&!document.getElementById("cvOpen")&&!document.getElementById("trOpen")&&!tEdit&&!(a&&a.matches&&a.matches("input,textarea,select"))}
 async function loadData(force){
   if(!SB||!MYID)return;
   const {data,error}=await SB.from("app_state").select("data,updated_at").eq("id","main").maybeSingle();
@@ -211,7 +211,7 @@ function bindPres(){const t=$("#prTog");if(!t)return;
       const sec=card.closest("section"),movers=[t,...(()=>{const a=[];let n=sec.nextElementSibling;while(n){a.push(n);n=n.nextElementSibling}return a})()];
       movers.forEach(el=>el.animate([{transform:`translateY(${h}px)`},{transform:"none"}],{duration:420,easing:"cubic-bezier(.22,1,.36,1)"}));
       requestAnimationFrame(()=>card.classList.remove("snap","closing"))},Math.max(170,wait))}}
-function openAtt(id){
+function openAtt(id,onClose){
   const e=S.events.find(x=>x.id===id);if(!e)return;
   const fresh=!e.att||!Object.keys(e.att).length;
   const work=Object.fromEntries(S.players.map(p=>[p.id,{...attRec(e,p.id)}]));
@@ -235,6 +235,8 @@ function openAtt(id){
     <p class="at-leg"><b>RPE</b> 1 riposo · 3 facile · 5 un po' duro · 7 molto duro · 10 massimo</p>
     <div class="sheet-actions">${canEdit&&!fresh?'<button class="btn" id="atReset">Ripristina</button>':"<span></span>"}<button class="btn primary" id="atOk">Fatto</button></div>`,bg=>{
     const q=x=>bg.querySelector(x);
+    if($("#trOpen"))bg.style.zIndex=50; /* sopra la schermata dell'allenamento */
+    const back=()=>{const y=window.scrollY;anim="";render();window.scrollTo(0,y);onClose&&onClose()};
     const upd=()=>{q("#atHead").innerHTML=head()};
     const red=reducedM();
     const setBadge=(id,pop=true)=>{const rw=work[id]||{};const el0=bg.querySelector(`[data-pr="${id}"]`);if(el0)el0.style.setProperty("--sc",rw.in?(rw.rpe!=null?RPEC(rw.rpe):"var(--win)"):"var(--loss)");const b=bg.querySelector(`[data-op="${id}"] .at-rb`);const t=document.createElement("span");t.innerHTML=badge(work[id]);const nb=t.firstChild;b.replaceWith(nb);
@@ -281,11 +283,11 @@ function openAtt(id){
         r.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===r));
         fly(r,id);fold(id,false);if(openP===id)openP=null;upd();commit();autosave();return}
     });
-    const close=()=>{commit();closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
+    const close=()=>{commit();closeSheet();back()};
     q("#atOk").onclick=close;q("#atX").onclick=close;
     const rs=q("#atReset");if(rs)rs.onclick=()=>{if(!rs.classList.contains("confirm")){rs.classList.add("confirm");rs.textContent="Tocca di nuovo per ripristinare";setTimeout(()=>{rs.classList.remove("confirm");rs.textContent="Ripristina"},3000);return}
-      delete e.att;dirty=true;changed=false;closeSheet();const y=window.scrollY;anim="";render();window.scrollTo(0,y)};
-    bg.addEventListener("click",ev=>{if(ev.target===bg){commit();setTimeout(()=>{const y=window.scrollY;anim="";render();window.scrollTo(0,y)},260)}},true);
+      delete e.att;dirty=true;changed=false;closeSheet();back()};
+    bg.addEventListener("click",ev=>{if(ev.target===bg){commit();setTimeout(back,260)}},true);
   });
 }
 function pname(id){const p=S.players.find(p=>p.id===id);return p?p.name:"Giocatore rimosso"}
@@ -401,13 +403,13 @@ function vClassifica(){
   </table></div></section>`;
 }
 
-function heroCard(e,tappable){
+function heroCard(e,tappable,full){
   const days=Math.round((pd(e.date)-pd(todayISO))/864e5);
   const isM=e.type==="partita";
   return `<div class="next ${isM?"match-bg":"train"} ${tappable?"tap":""}" ${tappable?`data-open="${e.id}" role="button" tabindex="0" aria-label="Apri ${esc(evTitle(e))}"`:""}>${!isM&&TRAIN?`<div class="next-photo" style="background-image:url('${TRAIN}')"></div>`:""}${isM&&MATCHBG?`<div class="match-photo" style="background-image:url('${MATCHBG}')"></div>`:""}
       <div class="kicker">${esc(S.categoria)} · ${isM?(e.home?"Partita in casa":"Partita in trasferta"):"Allenamento"}</div>
       ${isM?teamsRow(e):`<div class="match">Allenamento</div>`}
-      <div class="meta"><span>${esc(dayLabel(e.date))}, ore ${esc(e.time)}${e.end?"–"+esc(e.end):""}</span>${tappable&&e.place?`<span>${esc(e.place)}</span>`:""}${tappable&&e.note?`<span>${esc(e.note)}</span>`:""}</div>
+      <div class="meta"><span>${esc(dayLabel(e.date))}, ore ${esc(e.time)}${e.end?"–"+esc(e.end):""}</span>${(tappable||full)&&e.place?`<span>${esc(e.place)}</span>`:""}${(tappable||full)&&e.note?`<span>${esc(e.note)}</span>`:""}</div>
       <div class="countdown">${played(e)?"Finale":(days<0||(days===0&&e.time<=new Date().toTimeString().slice(0,5)))?"Conclusa":days===0?"Oggi":days===1?"Domani":"Tra "+days+" giorni"}</div>
     </div>`;
 }
@@ -447,6 +449,43 @@ function openEvent(id,fromEl){
   const eb=ov.querySelector("#evEdit");if(eb)eb.onclick=()=>{ov.remove();lockScroll(false);editEvent(e.id)};
   const cb=ov.querySelector("#evConv");if(cb)cb.onclick=()=>openConv(e.id,cb);
   ov.querySelector("#evClose").focus({preventScroll:true});
+}
+/* ---------- SCHERMATA ALLENAMENTO ---------- */
+function trainTiles(e){const st=attStats(e),has=e.att&&Object.keys(e.att).length;
+  const sub=has||st.done?`${st.pres}/${st.tot} presenti${st.rpe!=null?" · RPE "+st.rpe.toFixed(1):""}`:"Da inserire";
+  return `<button class="tr-tile" id="trRep"><span class="tr-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><b>Resoconto</b><small>In arrivo</small></button>
+    <button class="tr-tile pri" id="trAtt"><span class="tr-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l2 2 3.5-4M4 16l2 2 3.5-4M13 7h7M13 17h7"/></svg></span><b>Presenze e RPE</b><small>${sub}</small></button>`}
+function openTrain(id,fromEl){
+  const e=S.events.find(x=>x.id===id);if(!e)return;
+  const red=reducedM()||!document.body.animate,E="cubic-bezier(.22,1,.36,1)";
+  const old=$("#trOpen");if(old)old.remove();
+  const ov=document.createElement("div");ov.className="evo tro";ov.id="trOpen";
+  ov.innerHTML=`${canEdit?'<button class="evo-edit" id="trEdit">Modifica</button>':""}<button class="evo-back" aria-label="Indietro"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="evo-in" role="dialog" aria-modal="true" aria-label="Allenamento">
+    ${heroCard(e,false,true)}<div class="tr-tiles">${trainTiles(e)}</div></div>`;
+  document.body.appendChild(ov);lockScroll(true);
+  const q=x=>ov.querySelector(x),card=q(".next");card.style.transformOrigin="0 0";
+  if(!red){
+    if(fromEl){const r=fromEl.getBoundingClientRect(),c=card.getBoundingClientRect();
+      card.animate([{transform:`translate(${r.left-c.left}px,${r.top-c.top}px) scale(${r.width/c.width},${r.height/c.height})`},{transform:"none"}],{duration:540,easing:E})}
+    else card.animate([{opacity:0,transform:"translateY(-16px) scale(.96)"},{opacity:1,transform:"none"}],{duration:440,easing:E});
+    ov.querySelectorAll(".tr-tile").forEach((el,i)=>el.animate([{opacity:0,transform:"translateY(34px) scale(.9)"},{opacity:1,transform:"none"}],{duration:500,delay:170+i*80,easing:"cubic-bezier(.25,1.3,.4,1)",fill:"backwards"}));
+    const ed=q(".evo-edit");if(ed)ed.animate([{opacity:0,transform:"translateX(12px) scale(.9)"},{opacity:1,transform:"none"}],{duration:420,delay:160,easing:E,fill:"backwards"})}
+  /* chiusura: i tasti scendono e il riquadro torna nella riga da cui era partito */
+  const close=()=>{if(!ov.id)return;ov.id="";lockScroll(false);if(red){ov.remove();return}
+    ov.style.pointerEvents="none";
+    ov.querySelectorAll(".tr-tiles,.evo-back,.evo-edit").forEach(el=>el.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(30px) scale(.95)"}],{duration:260,easing:"cubic-bezier(.4,0,.8,.4)",fill:"forwards"}));
+    const row=document.querySelector(`#app [data-att="${id}"],#app [data-open="${id}"]`),r=row&&row.getBoundingClientRect(),c=card.getBoundingClientRect();
+    if(r&&r.bottom>0&&r.top<innerHeight)card.animate([{transform:"none",opacity:1},{transform:`translate(${r.left-c.left}px,${r.top-c.top}px) scale(${r.width/c.width},${r.height/c.height})`,opacity:.25}],{duration:480,delay:40,easing:"cubic-bezier(.5,0,.15,1)",fill:"forwards"});
+    else card.animate([{opacity:1,transform:"none"},{opacity:0,transform:"scale(.92)"}],{duration:320,easing:"ease-in",fill:"forwards"});
+    let ended=false;const end=()=>{if(ended)return;ended=true;ov.remove()};
+    ov.animate([{opacity:1},{opacity:1,offset:.65},{opacity:0}],{duration:560,easing:"ease",fill:"forwards"}).onfinish=end;setTimeout(end,700)};
+  const bindTiles=()=>{
+    q("#trAtt").onclick=()=>openAtt(id,()=>{if(!ov.id)return;lockScroll(true);const cur=S.events.find(x=>x.id===id);if(!cur){close();return}
+      q(".tr-tiles").innerHTML=trainTiles(cur);bindTiles()});
+    q("#trRep").onclick=()=>toast("Il resoconto arriverà presto")};
+  bindTiles();
+  q(".evo-back").onclick=close;ov.addEventListener("click",ev=>{if(ev.target===ov)close()});
+  const eb=q("#trEdit");if(eb)eb.onclick=()=>{ov.id="";ov.remove();lockScroll(false);editEvent(id)};
 }
 /* ---------- CONVOCAZIONI ---------- */
 /* di default tutti convocati: in e.nc restano solo gli esclusi */
@@ -1186,12 +1225,12 @@ function bind(){
   document.querySelectorAll('[data-add="player"]').forEach(b=>b.onclick=()=>editPlayer(null));
   const es=$("#editSt");if(es)es.onclick=editStandings;
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>goTab(b.dataset.go));
-  document.querySelectorAll("[data-att]").forEach(b=>b.onclick=()=>openAtt(b.dataset.att));
+  document.querySelectorAll("[data-att]").forEach(b=>b.onclick=()=>openTrain(b.dataset.att,b));
   bindPres();
   document.querySelectorAll("[data-match]").forEach(el=>el.onclick=()=>openMatch(el.dataset.match,el));
-  /* un allenamento porta nella sezione Allenamenti e apre subito presenze e RPE */
+  /* un allenamento apre la sua schermata, con Resoconto e Presenze e RPE */
   const openEv=el=>{const ev=S.events.find(x=>x.id===el.dataset.open);
-    if(ev&&ev.type!=="partita"){goTab("allenamenti");setTimeout(()=>openAtt(ev.id),reducedM()?0:340);return}
+    if(ev&&ev.type!=="partita"){openTrain(ev.id,el);return}
     openEvent(el.dataset.open,el)};
   document.querySelectorAll("[data-open]").forEach(el=>{el.onclick=()=>openEv(el);el.onkeydown=k=>{if(k.key==="Enter"||k.key===" "){k.preventDefault();openEv(el)}}});
   bindTattica();
