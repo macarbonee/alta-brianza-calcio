@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794477471";
+const APP_V="1794477795";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -993,6 +993,9 @@ function hk(){return tMatch+":"+tPer}
 function hist(){return tHist[hk()]||(tHist[hk()]={p:[],f:[]})}
 function pushHist(){const h=hist();h.p.push(JSON.stringify(getT()));if(h.p.length>40)h.p.shift();h.f=[];saveHist();
   const T=getT();if(T.sug){delete T.sug;const b=document.querySelector(".sugg");if(b){b.classList.add("out");setTimeout(()=>b.remove(),260)}}}
+const HZ=()=>!!(window.matchMedia&&matchMedia("(orientation: landscape) and (min-width:600px)").matches);
+/* in orizzontale il campo si gira: la nostra porta a sinistra, l'attacco a destra */
+function tokXY(x,y){return HZ()?`left:${(8+y*.85).toFixed(2)}%;top:${(4+x*.92).toFixed(2)}%`:`left:${x}%;top:${100-y}%`}
 function tokPos(){return [...document.querySelectorAll("[data-slot]")].map(el=>[el.style.left,el.style.top])}
 function flipTok(prev){if(reducedM()||!prev)return;
   document.querySelectorAll("[data-slot]").forEach((el,i)=>{if(!prev[i])return;const nl=el.style.left,nt=el.style.top;
@@ -1043,7 +1046,7 @@ function vTattica(){
   const SP=SLOTPOS[T.module]||[];
   const tok=(sl,i)=>{const p=S.players.find(x=>x.id===sl.pid);const k=SP[i],f=p?fit(p,k):null;
     const surname=p?(p.name.includes(" ")?p.name.slice(p.name.indexOf(" ")+1):p.name):"";
-    return `<button class="tok ${i===0?"gk":""} ${p?"":"empty"} ${tSel===i?"sel":""}" data-slot="${i}" style="left:${sl.x}%;top:${100-sl.y}%;--rc:${p?RCOL[p.role]:"#fff"}" ${ed?"":"disabled tabindex=\"-1\""} aria-label="${p?esc(p.name):"Posto libero"}">
+    return `<button class="tok ${i===0?"gk":""} ${p?"":"empty"} ${tSel===i?"sel":""}" data-slot="${i}" style="${tokXY(sl.x,sl.y)};--rc:${p?RCOL[p.role]:"#fff"}" ${ed?"":"disabled tabindex=\"-1\""} aria-label="${p?esc(p.name):"Posto libero"}">
       <span class="tok-sh" aria-hidden="true"></span>${p&&TM.cap===p.id?`<span class="tok-cap" title="Capitano">C</span>`:p&&TM.vice===p.id?`<span class="tok-cap v" title="Vice capitano">VC</span>`:""}${k?`<span class="tok-pos f${f==null?"x":f}" title="${esc(POS[k])}">${k}</span>`:""}
       <span class="tok-n">${p?jersey(i===0?{...p,role:"Portiere"}:{...p,role:p.role==="Portiere"?"Difensore":p.role}):"+"}</span>
       <span class="tok-l">${p?esc(surname):"Libero"}</span></button>`};
@@ -1053,9 +1056,15 @@ function vTattica(){
   <section><h2>Tempo</h2>
     <div class="tper" style="--i:${tPer}"><span class="tper-ind" aria-hidden="true"></span>${[0,1,2,3].map(i=>`<button class="${i===tPer?"on":""}" data-per="${i}"><b>${i+1}°</b><small>${TM.periods[i]?esc(TM.periods[i].module):"—"}</small></button>`).join("")}</div></section>
   <section><h2 class="h-form">${T.sug?"Formazione":`Formazione · ${tPer+1}° tempo`}${T.sug?`<span class="sugg">Consigliata</span>`:""}${can?`<span class="hist"><button id="tUndo" aria-label="Annulla" ${H.p.length?"":"disabled"}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button id="tRedo" aria-label="Ripeti" ${H.f.length?"":"disabled"}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button></span>`:""}</h2>
-    <div class="pitch ${ed?"editing":""}" id="pitch">
+    <div class="pitch ${ed?"editing":""} ${HZ()?"hz":""}" id="pitch">
       <div class="p-crest" style="background-image:url('${L[S.team]||LOGO}')" aria-hidden="true"></div>
-      <svg class="pitch-lines" viewBox="0 0 60 90" preserveAspectRatio="none" aria-hidden="true">
+      <svg class="pitch-lines hz-l" viewBox="0 0 90 60" preserveAspectRatio="none" aria-hidden="true">
+        <rect x="3" y="3" width="84" height="54" rx="1"/><line x1="45" y1="3" x2="45" y2="57"/><circle cx="45" cy="30" r="7.5"/>
+        <rect x="3" y="16" width="13" height="28"/><rect x="3" y="24" width="5" height="12"/><path d="M16 24 Q20.5 30 16 36"/>
+        <rect x="74" y="16" width="13" height="28"/><rect x="82" y="24" width="5" height="12"/><path d="M74 24 Q69.5 30 74 36"/>
+        <rect x="1.2" y="26" width="1.8" height="8" class="goal"/><rect x="87" y="26" width="1.8" height="8" class="goal"/>
+        <circle cx="45" cy="30" r=".7" class="dot"/></svg>
+      <svg class="pitch-lines vt-l" viewBox="0 0 60 90" preserveAspectRatio="none" aria-hidden="true">
         <rect x="3" y="3" width="54" height="84" rx="1"/><line x1="3" y1="45" x2="57" y2="45"/><circle cx="30" cy="45" r="7.5"/>
         <rect x="16" y="3" width="28" height="13"/><rect x="24" y="3" width="12" height="5"/><path d="M24 16 Q30 20.5 36 16"/>
         <rect x="16" y="74" width="28" height="13"/><rect x="24" y="82" width="12" height="5"/><path d="M24 74 Q30 69.5 36 74"/>
@@ -1136,7 +1145,7 @@ function bindTattica(){
     el.onpointerdown=ev=>{ev.preventDefault();el.setPointerCapture(ev.pointerId);sx=ev.clientX;sy=ev.clientY;moved=false;el.classList.add("drag")};
     el.onpointermove=ev=>{if(!el.classList.contains("drag"))return;if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>6)moved=true;if(!moved)return;
       const rc=pitch.getBoundingClientRect();const x=Math.min(96,Math.max(4,(ev.clientX-rc.left)/rc.width*100)),y=Math.min(97,Math.max(3,(ev.clientY-rc.top)/rc.height*100));
-      el.style.left=x+"%";el.style.top=y+"%";el.dataset.x=x;el.dataset.y=y};
+      el.style.left=x+"%";el.style.top=y+"%";const hz=pitch.classList.contains("hz");el.dataset.x=hz?Math.min(100,Math.max(0,(y-4)/.92)):x;el.dataset.y=hz?100-Math.min(100,Math.max(0,(x-8)/.85)):y};
     el.onpointerup=el.onpointercancel=()=>{el.classList.remove("drag");
       if(moved){mutate(()=>{T.slots[i].x=+el.dataset.x;T.slots[i].y=100-el.dataset.y});return}
       if(tCapMode){const pid=T.slots[i].pid,key=tCapMode;tCapMode=null;
@@ -1589,6 +1598,10 @@ const pinBar=(()=>{if(!IS_APP)return ()=>{};
     const fh=Math.max(innerHeight,screen.height),gap=Math.max(6,sab-14);
     root.style.setProperty("--tb-top",(fh-gap-tb.offsetHeight)+"px");root.classList.add("pinbar")}})();
 const _render=render;render=function(){_render();pinBar()};
-addEventListener("resize",()=>pinBar());addEventListener("orientationchange",()=>setTimeout(pinBar,300));
+addEventListener("resize",()=>pinBar());
+/* girando il telefono la Tattica ridisegna il campo nel verso giusto */
+try{matchMedia("(orientation: landscape) and (min-width:600px)").addEventListener("change",m=>{if(tab!=="tattica"||!$("#pitch"))return;const y=window.scrollY;anim="";render();window.scrollTo(0,y);
+  /* appena girato in orizzontale, il campo si mette tutto in vista */
+  if(m.matches)setTimeout(()=>{const p=$("#pitch");if(p)p.scrollIntoView({block:"start",behavior:reducedM()?"auto":"smooth"})},120)})}catch(_){}addEventListener("orientationchange",()=>setTimeout(pinBar,300));
 pinBar();
 })();
