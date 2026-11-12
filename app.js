@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794476926";
+const APP_V="1794477471";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -1404,7 +1404,7 @@ function runSplash(){if(RESUME&&ABD_ME){RESUME=null;anim="a-open";document.body.
     const t=(now-t0)/1000;cx.clearRect(0,0,cv.width,cv.height);T.draw(cx,tris,t);
     if(alive&&!reduced)raf=requestAnimationFrame(draw);
   }
-  let t0set=false;build();draw(performance.now());addEventListener("resize",()=>{if(alive){build();if(reduced)draw(performance.now())}});
+  let t0set=false;build();draw(performance.now());addEventListener("resize",()=>{if(alive){if(window.ABTRI&&ABTRI.fh)sp.style.height=ABTRI.fh()+"px";build();if(reduced)draw(performance.now())}});
 
   let done=false;
   const hide=()=>{if(done)return;done=true;clearTimeout(safety);anim="a-open";document.body.classList.add("ready");render();setTimeout(()=>{if(anim==="a-open")anim=""},1400);

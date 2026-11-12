@@ -60,7 +60,7 @@
       cx.fillStyle="rgb("+(o.b[0]*k|0)+","+(o.b[1]*k|0)+","+(Math.min(255,o.b[2]*k)|0)+")";
       cx.beginPath();cx.moveTo(o.p[0][0],o.p[0][1]);cx.lineTo(o.p[1][0],o.p[1][1]);cx.lineTo(o.p[2][0],o.p[2][1]);cx.closePath();cx.fill();
       cx.strokeStyle="rgba(255,255,255,.035)";cx.stroke()}}
-  function fh(){var sa=navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);return sa?Math.max(innerHeight,screen.height):innerHeight}
+  function fh(){var sa=navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);if(!sa)return innerHeight;var a=screen.width,b=screen.height,land=innerWidth>innerHeight;return Math.max(innerHeight,land?Math.min(a,b):Math.max(a,b))}
   function size(cv){var dpr=Math.min(2,devicePixelRatio||1),W=innerWidth,H=fh(),cx=cv.getContext("2d");cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);return {cx:cx,W:W,H:H}}
   /* la stessa immagine che iPhone mostra all'avvio: se c'è, il passaggio è invisibile */
   function launchImg(){var sa=navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);if(!sa)return null;
