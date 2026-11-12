@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794476194";
+const APP_V="1794476445";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -534,7 +534,13 @@ function openRep(id,fromEl,onClose){
     const selP=rpSel&&V[rpSel.t][rpSel.i];
     const st=ov.scrollTop;
     ov.innerHTML=`<button class="evo-back" aria-label="Indietro"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="evo-in" role="dialog" aria-modal="true" aria-label="Resoconto">
-      <div class="cv-top rp-top"><span class="tr-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><div><small>Resoconto</small><b>Allenamento</b><span>${esc(dayLabel(e.date))}, ore ${esc(e.time)}${e.end?"–"+esc(e.end):""}</span></div></div>
+      <div class="cv-top rp-top"><span class="tr-ic"><svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <rect x="4.5" y="5.5" width="17" height="22" rx="2.6" fill="#c9a46a" stroke="#f1d39c" stroke-width="1.4"/>
+  <rect x="7.5" y="9" width="11" height="15.5" rx="1" fill="#fff"/>
+  <rect x="9.5" y="3.5" width="7" height="4" rx="1.3" fill="#e9eefc" stroke="#0d1a58" stroke-width="1.2"/>
+  <path d="M9.6 13h6.8M9.6 16.2h6.8M9.6 19.4h4.2" stroke="#8aa0e6" stroke-width="1.3"/>
+  <g transform="rotate(40 23.5 18)"><rect x="21.6" y="8.5" width="3.8" height="14" rx=".6" fill="#f0a21e" stroke="#fff" stroke-width="1"/><path d="M21.6 22.5l1.9 3.6 1.9-3.6z" fill="#f6d7b0" stroke="#fff" stroke-width="1"/><path d="M23.1 25.3l.4.8.4-.8z" fill="#0d1a58"/><rect x="21.6" y="7.2" width="3.8" height="2.4" rx=".6" fill="#ff7a8a" stroke="#fff" stroke-width="1"/></g>
+</svg></span><div><small>Resoconto</small><b>Allenamento</b><span>${esc(dayLabel(e.date))}, ore ${esc(e.time)}${e.end?"–"+esc(e.end):""}</span></div></div>
       <div class="rp-sec"><h4>Esercizi</h4><div class="rp-exs">${exHTML()}</div></div>
       <div class="rp-sec"><h4>Partitella${e.pt&&canEdit?'<button class="rp-reset" id="rpReset">Ripristina</button>':""}</h4>
         ${pd(e.date).getDay()===2?`<button class="rp-tema ${e.tema?"":"empty"}" id="rpTema" ${canEdit?"":"disabled"}><span>Tema:</span><b>${e.tema?esc(e.tema):canEdit?"tocca per scriverlo":"non ancora scritto"}</b>${canEdit?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>':""}</button>`:""}

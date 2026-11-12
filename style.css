@@ -1333,3 +1333,5 @@ body{overflow-anchor:none}
 .rp-tema b{flex:1;min-width:0;font:600 15px var(--f-ui);overflow-wrap:anywhere}
 .rp-tema.empty b{font-weight:500;opacity:.7}
 .rp-tema svg{flex:none;opacity:.75}
+.rp-top .tr-ic{display:flex;align-items:center;justify-content:center}
+.rp-top .tr-ic svg{width:38px;height:38px;display:block;filter:drop-shadow(0 3px 5px rgba(5,12,45,.35))}
