@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794485607";
+const APP_V="1794512217";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -96,7 +96,11 @@ function sorted(){return [...S.events].sort((a,b)=>(a.date+a.time).localeCompare
 function matchTitle(e){const me=S.short||S.team;return e.home?`${me} – ${e.opponent}`:`${e.opponent} – ${me}`}
 function evTitle(e){return e.type==="partita"?matchTitle(e):"Allenamento"}
 function dayLabel(s){const d=pd(s);return `${GG[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}`}
-function crestImg(name,us,cls=""){const L=S.logos||{};const src=us?(L[S.team]||LOGO):L[name];
+/* stemma di una squadra: nome esatto, altrimenti un nome che lo contiene (es. "AC Legnano" -> "Legnano") */
+const lnorm=x=>String(x||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+function logoOf(name){const L=S.logos||{};if(L[name])return L[name];const n=lnorm(name);if(!n)return;
+  let best=null;for(const k in L){const m=lnorm(k);if(m&&(n.includes(m)||m.includes(n))&&(!best||m.length>lnorm(best).length))best=k}return best?L[best]:undefined}
+function crestImg(name,us,cls=""){const L=S.logos||{};const src=us?(L[S.team]||LOGO):logoOf(name);
   return `<span class="cchip ${cls}">${src?`<img src="${src}" alt="">`:`<b>${esc((name||"?").split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase())}</b>`}</span>`}
 function teamsRow(e){
   const me=S.short||S.team;
@@ -115,7 +119,7 @@ function matchRow(e){
   const stat=st==="V"?"Vittoria":st==="N"?"Pareggio":st==="P"?"Sconfitta":st==="todo"?"Da inserire":days===0?"Oggi":days===1?"Domani":`Tra ${days} giorni`;
   const giornata=e.note&&/^Giornata/.test(e.note)?e.note:"";
   const ag=Object.entries(e.scorers||{}).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]);
-  const wm=(S.logos||{})[e.opponent];
+  const wm=logoOf(e.opponent);
   const BALL='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7.5l3.8 2.8-1.4 4.5H9.6l-1.4-4.5z" fill="currentColor" fill-opacity=".25"/></svg>';
   const PIN='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
   const foot=ag.length?`<div class="mc-foot goals"><span class="mc-ic">${BALL}</span><ul class="glist inline">${ag.map(([id,n])=>`<li>${nameHTML(pname(id))}${n>1?` <em>(x${n})</em>`:""}</li>`).join("")}</ul></div>`
