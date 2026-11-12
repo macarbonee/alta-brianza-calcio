@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794475819";
+const APP_V="1794476194";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -492,6 +492,7 @@ function openTrain(id,fromEl){
 /* partitelle 9 contro 8 preparate per ogni allenamento della stagione:
    la squadra da 9 gioca 3-3-2, quella da 8 con una sola punta */
 const PT={"ids":["xmw6vun11wv3s","p2","p9","xmw6vtr2ukbay","xmw6w0g3bssjb","p3","xmw6vvgxm2gkx","xmw6vzz5nxa0q","p1","p11","p12","p8","p5","xmw6vyzpsbchz","p4","p6","p10"],"by":{"2026-11-10":"ibgdempcjkaoflnhq","2026-11-13":"kodfenhjqibgalmpc","2026-11-17":"ibdfempcjkogalnhq","2026-11-20":"kdogenhjqibaflmpc","2026-11-24":"igdfempcjkboalnhq","2026-11-27":"kbodenhjqiagflmpc","2026-12-01":"iodfempcjkbgalnhq","2026-12-04":"kbgdenhjqiaoflmpc","2026-12-08":"idgbempcjkaoflnhq","2026-12-11":"kfdoenhjqibgalmpc","2026-12-15":"ibdfempcjkagolnhq","2026-12-18":"kgdoenhjqibaflmpc","2026-12-22":"ibodempcjkagflnhq","2027-01-05":"kgdfenhjqiboalmpc","2027-01-08":"ifdoempcjkbgalnhq","2027-01-12":"kdgbenhjqiaoflmpc","2027-01-15":"ifdgempcjkboalnhq","2027-01-19":"kdobenhjqiagflmpc","2027-01-22":"ibdfempcjkgoalnhq","2027-01-26":"kdgoenhjqibfalmpc","2027-01-29":"ibdgempcjkfoalnhq","2027-02-02":"kdofenhjqibgalmpc","2027-02-05":"idofempcjkbgalnhq","2027-02-09":"kbdgenhjqifoalmpc","2027-02-12":"idgfempcjkboalnhq","2027-02-16":"kbdoenhjqifgalmpc","2027-02-19":"idogempcjkbaflnhq","2027-02-23":"kbdfenhjqiogalmpc","2027-02-26":"ibdfempcjkogalnhq","2027-03-02":"kdogenhjqibfalmpc","2027-03-05":"ibgdempcjkfoalnhq","2027-03-09":"kodfenhjqibgalmpc","2027-03-12":"idobempcjkagflnhq","2027-03-16":"kfdgenhjqiboalmpc","2027-03-19":"iodfempcjkbgalnhq","2027-03-23":"kbgdenhjqifoalmpc","2027-03-26":"ibdfempcjkagolnhq","2027-03-30":"kgdoenhjqibfalmpc","2027-04-02":"igdoempcjkbaflnhq","2027-04-06":"kbdfenhjqiagolmpc","2027-04-09":"igdfempcjkboalnhq","2027-04-13":"kbodenhjqifgalmpc","2027-04-16":"idgbempcjkfoalnhq","2027-04-20":"kfdoenhjqibgalmpc","2027-04-23":"ibdoempcjkfgalnhq","2027-04-27":"kdgfenhjqiboalmpc","2027-04-30":"idgoempcjkbfalnhq","2027-05-04":"kbdfenhjqigoalmpc","2027-05-07":"ifdgempcjkboalnhq","2027-05-11":"kdobenhjqifgalmpc","2027-05-14":"ifdoempcjkbgalnhq","2027-05-18":"kdgbenhjqifoalmpc","2027-05-21":"ibdfempcjkgoalnhq","2027-05-25":"kdgoenhjqiabflmpc","2027-05-28":"ibodempcjkfgalnhq"}};
+const EXN=["Attivazione","Tecnica","Duelli"];
 const PT_K=[["POR","TS","DC","TD","AS","CC","AD","PS","PD"],["POR","TS","DC","TD","AS","CC","AD","ATT"]];
 const PT_XY=()=>[MODULI["3-3-2"],[[50,7],[20,26],[50,24],[80,26],[18,50],[50,48],[82,50],[50,74]]];
 function ptBase(e){const ks=Object.keys(PT.by).sort();let c=PT.by[e.date];
@@ -525,7 +526,7 @@ function openRep(id,fromEl,onClose){
           <span class="tok-n">${p?jersey(i===0?{...p,role:"Portiere"}:{...p,role:p.role==="Portiere"?"Difensore":p.role}):"+"}</span>
           <span class="tok-l">${p?esc(surn(p)):"Libero"}</span></button>`}).join("")}</div>`};
   const exHTML=()=>{const R=e.rep||[];return [0,1,2].map(i=>{const x=R[i]||{},has=x.t||x.d;
-    return `<button class="rp-ex ${has?"":"empty"}" data-ex="${i}" ${canEdit?"":"disabled"}><span class="rp-num">${i+1}</span><span class="rp-tx"><b>${has?esc(x.t||"Senza titolo"):`Esercizio ${i+1}`}</b><small>${has?esc(x.d||""):canEdit?"Tocca per scrivere titolo e descrizione":"Non ancora scritto"}</small></span>${canEdit?'<svg class="rp-pen" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>':""}</button>`}).join("")};
+    return `<button class="rp-ex ${has?"":"empty"}" data-ex="${i}" ${canEdit?"":"disabled"}><span class="rp-num">${i+1}</span><span class="rp-tx"><small class="rp-lab">${EXN[i]}</small><b>${has?esc(x.t||EXN[i]):EXN[i]}</b><small>${has?esc(x.d||""):canEdit?"Tocca per scrivere titolo e descrizione":"Non ancora scritto"}</small></span>${canEdit?'<svg class="rp-pen" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>':""}</button>`}).join("")};
   const draw=()=>{const V=view(),d=pd(e.date);
     const on=new Set(V.flat().filter(Boolean));
     const pres=S.players.filter(p=>attRec(e,p.id).in),abs=S.players.filter(p=>!attRec(e,p.id).in).sort(bySur);
@@ -536,6 +537,7 @@ function openRep(id,fromEl,onClose){
       <div class="cv-top rp-top"><span class="tr-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><div><small>Resoconto</small><b>Allenamento</b><span>${esc(dayLabel(e.date))}, ore ${esc(e.time)}${e.end?"–"+esc(e.end):""}</span></div></div>
       <div class="rp-sec"><h4>Esercizi</h4><div class="rp-exs">${exHTML()}</div></div>
       <div class="rp-sec"><h4>Partitella${e.pt&&canEdit?'<button class="rp-reset" id="rpReset">Ripristina</button>':""}</h4>
+        ${pd(e.date).getDay()===2?`<button class="rp-tema ${e.tema?"":"empty"}" id="rpTema" ${canEdit?"":"disabled"}><span>Tema:</span><b>${e.tema?esc(e.tema):canEdit?"tocca per scriverlo":"non ancora scritto"}</b>${canEdit?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>':""}</button>`:""}
         <div class="rp-team"><span class="rp-dot a"></span><b>Squadra A</b><small>9 giocatori · 3-3-2</small></div>
         ${pitchHTML(0,V)}
         <div class="rp-team"><span class="rp-dot b"></span><b>Squadra B</b><small>8 giocatori · una punta</small></div>
@@ -550,6 +552,14 @@ function openRep(id,fromEl,onClose){
   const bind=()=>{
     q(".evo-back").onclick=close;q("#rpClose").onclick=close;
     ov.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>{if(canEdit)editEx(+b.dataset.ex)});
+    const tm=q("#rpTema");if(tm&&canEdit)tm.onclick=()=>sheet(`<h3>Tema della partitella</h3>
+      <label class="field">Tema<input id="tm_v" value="${esc(e.tema||"")}" placeholder="Es. superiorità numerica sulle fasce" maxlength="120"></label>
+      <div class="sheet-actions">${e.tema?'<button class="btn danger" id="tm_clr">Svuota</button>':"<span></span>"}<div><button class="btn" id="tm_no">Annulla</button><button class="btn primary" id="tm_ok">Fatto</button></div></div>`,
+      bg=>{bg.style.zIndex=60;const g=x=>bg.querySelector(x);g("#tm_no").onclick=closeSheet;
+        const set=v=>{if(v)e.tema=v;else delete e.tema;dirty=true;closeSheet();autosave();draw()};
+        const cl=g("#tm_clr");if(cl)cl.onclick=()=>{if(!cl.dataset.c){cl.dataset.c=1;cl.textContent="Conferma";return}set("")};
+        g("#tm_ok").onclick=()=>set(g("#tm_v").value.trim());
+        g("#tm_v").addEventListener("keydown",k=>{if(k.key==="Enter"){k.preventDefault();set(g("#tm_v").value.trim())}})});
     const rs=q("#rpReset");if(rs)rs.onclick=()=>{if(!rs.dataset.c){rs.dataset.c=1;rs.textContent="Conferma ripristino";return}delete e.pt;rpSel=null;dirty=true;autosave();draw()};
     const dn=q("#rpDone");if(dn)dn.onclick=()=>{rpEdit=false;rpSel=null;draw()};
     const dl=q("#rpDel");if(dl)dl.onclick=()=>{const s=rpSel;mut(P=>{P[s.t][s.i]=null});rpSel=null;draw()};
@@ -567,7 +577,7 @@ function openRep(id,fromEl,onClose){
     ov.querySelectorAll("[data-ptb]").forEach(b=>b.onclick=()=>{if(!rpSel){toast("Prima tocca il posto in campo dove metterlo");return}
       const s=rpSel;mut(P=>{P[s.t][s.i]=b.dataset.ptb});rpSel=null;draw();pop(`[data-pts="${s.t}:${s.i}"]`)})};
   const editEx=i=>{const R=e.rep||[],x=R[i]||{};
-    sheet(`<h3>Esercizio ${i+1}</h3>
+    sheet(`<h3>${EXN[i]}</h3>
       <label class="field">Titolo<input id="ex_t" value="${esc(x.t||"")}" placeholder="Es. Rondo 4 contro 2" maxlength="80"></label>
       <label class="field">Descrizione<textarea id="ex_d" rows="6" placeholder="Come si svolge, durata, obiettivo…">${esc(x.d||"")}</textarea></label>
       <div class="sheet-actions">${x.t||x.d?'<button class="btn danger" id="ex_clr">Svuota</button>':"<span></span>"}<div><button class="btn" id="ex_no">Annulla</button><button class="btn primary" id="ex_ok">Fatto</button></div></div>`,

@@ -1323,3 +1323,13 @@ body{overflow-anchor:none}
 .rp-abs{margin:2px 4px 0;font:500 13.5px/1.5 var(--f-ui);color:#ffc1bb}
 .rp-abs em{display:block;font:700 11px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;font-style:normal;opacity:.9}
 .rp-abs .sur{font-weight:800}
+
+.rp-lab{font:700 11px var(--f-ui)!important;letter-spacing:.1em;text-transform:uppercase;color:var(--pitch)!important}
+.rp-ex.empty .rp-lab{display:none}
+.rp-tema{display:flex;align-items:center;gap:8px;width:100%;padding:12px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff;text-align:left;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .18s}
+.rp-tema:active{transform:scale(.97)}
+.rp-tema:disabled{cursor:default}
+.rp-tema span{flex:none;font:800 15px var(--f-ui);color:#f1d39c}
+.rp-tema b{flex:1;min-width:0;font:600 15px var(--f-ui);overflow-wrap:anywhere}
+.rp-tema.empty b{font-weight:500;opacity:.7}
+.rp-tema svg{flex:none;opacity:.75}
