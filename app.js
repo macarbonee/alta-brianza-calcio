@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794412501";
+const APP_V="1794475333";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -53,7 +53,7 @@ function cacheS(){try{localStorage.setItem("ab-cache",JSON.stringify(stripLogos(
 /* modifiche fatte senza connessione: restano sul telefono e partono appena torna la rete, anche dopo aver chiuso l'app */
 function setPending(on){try{on?localStorage.setItem("ab-pending","1"):localStorage.removeItem("ab-pending")}catch(_){}}
 function isPending(){try{return localStorage.getItem("ab-pending")==="1"}catch(_){return false}}
-function idleUI(){const a=document.activeElement;return !dirty&&!saving&&!document.getElementById("sheetbg")&&!document.getElementById("mOpen")&&!document.getElementById("cvOpen")&&!document.getElementById("trOpen")&&!tEdit&&!(a&&a.matches&&a.matches("input,textarea,select"))}
+function idleUI(){const a=document.activeElement;return !dirty&&!saving&&!document.getElementById("sheetbg")&&!document.getElementById("mOpen")&&!document.getElementById("cvOpen")&&!document.getElementById("trOpen")&&!document.getElementById("rpOpen")&&!tEdit&&!(a&&a.matches&&a.matches("input,textarea,select"))}
 async function loadData(force){
   if(!SB||!MYID)return;
   const {data,error}=await SB.from("app_state").select("data,updated_at").eq("id","main").maybeSingle();
@@ -453,7 +453,7 @@ function openEvent(id,fromEl){
 /* ---------- SCHERMATA ALLENAMENTO ---------- */
 function trainTiles(e){const st=attStats(e),has=e.att&&Object.keys(e.att).length;
   const sub=has||st.done?`${st.pres}/${st.tot} presenti${st.rpe!=null?" · RPE "+st.rpe.toFixed(1):""}`:"Da inserire";
-  return `<button class="tr-tile" id="trRep"><span class="tr-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><b>Resoconto</b><small>In arrivo</small></button>
+  return `<button class="tr-tile" id="trRep"><span class="tr-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><b>Resoconto</b><small>${repSub(e)}</small></button>
     <button class="tr-tile pri" id="trAtt"><span class="tr-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l2 2 3.5-4M4 16l2 2 3.5-4M13 7h7M13 17h7"/></svg></span><b>Presenze e RPE</b><small>${sub}</small></button>`}
 function openTrain(id,fromEl){
   const e=S.events.find(x=>x.id===id);if(!e)return;
@@ -482,10 +482,122 @@ function openTrain(id,fromEl){
   const bindTiles=()=>{
     q("#trAtt").onclick=()=>openAtt(id,()=>{if(!ov.id)return;lockScroll(true);const cur=S.events.find(x=>x.id===id);if(!cur){close();return}
       q(".tr-tiles").innerHTML=trainTiles(cur);bindTiles()});
-    q("#trRep").onclick=()=>toast("Il resoconto arriverà presto")};
+    q("#trRep").onclick=()=>openRep(id,q("#trRep"),()=>{if(!ov.id)return;const cur=S.events.find(x=>x.id===id);if(!cur){close();return}
+      q(".tr-tiles").innerHTML=trainTiles(cur);bindTiles()})};
   bindTiles();
   q(".evo-back").onclick=close;ov.addEventListener("click",ev=>{if(ev.target===ov)close()});
   const eb=q("#trEdit");if(eb)eb.onclick=()=>{ov.id="";ov.remove();lockScroll(false);editEvent(id)};
+}
+/* ---------- RESOCONTO ALLENAMENTO ---------- */
+/* partitelle 9 contro 8 preparate per ogni allenamento della stagione:
+   la squadra da 9 gioca 3-3-2, quella da 8 con una sola punta */
+const PT={"ids":["xmw6vun11wv3s","p2","p9","xmw6vtr2ukbay","xmw6w0g3bssjb","p3","xmw6vvgxm2gkx","xmw6vzz5nxa0q","p1","p11","p12","p8","p5","xmw6vyzpsbchz","p4","p6","p10"],"by":{"2026-11-10":"ibdflmhcjkogaenpq","2026-11-13":"kogfempcjibdalnhq","2026-11-17":"ibgfenhjqkodalmpc","2026-11-20":"kogflmhjqibdaenpc","2026-11-24":"ibdfempjqkogalnhc","2026-11-27":"kodfenhcjibgalmpq","2026-12-01":"iogbempcjkfdalnhq","2026-12-04":"kodbenhjqifgalmpc","2026-12-08":"iodblmhcjkfgaenpq","2026-12-11":"kbgfenhcjiodalmpq","2026-12-15":"iodfempjqkbgalnhc","2026-12-18":"kogblmhjqifdaenpc","2026-12-22":"iodfenhcjkbgalmpq","2027-01-05":"kogflmhjqibdaenpc","2027-01-08":"ibgfempcjkodalnhq","2027-01-12":"kodbempjqifgalnhc","2027-01-15":"ibdflmhcjkogaenpq","2027-01-19":"kogbenhjqifdalmpc","2027-01-22":"ibdfenhjqkogalmpc","2027-01-26":"kogbenhcjifdalmpq","2027-01-29":"iodbempcjkfgalnhq","2027-02-02":"kbgfempjqiodalnhc","2027-02-05":"iogflmhcjkbdaenpq","2027-02-09":"kbdflmhjqiogaenpc","2027-02-12":"iodfempjqkbgalnhc","2027-02-16":"kodfenhcjibgalmpq","2027-02-19":"iodblmhcjkfgaenpq","2027-02-23":"kbgfempcjiodalnhq","2027-02-26":"iogflmhjqkbdaenpc","2027-03-02":"kogbenhjqifdalmpc","2027-03-05":"iogfenhcjkbdalmpq","2027-03-09":"kodfempjqibgalnhc","2027-03-12":"ibdfenhjqkogalmpc","2027-03-16":"kbgflmhcjiodaenpq","2027-03-19":"iodblmhjqkfgaenpc","2027-03-23":"kogbempcjifdalnhq","2027-03-26":"ibdfenhcjkogalmpq","2027-03-30":"kbgfempjqiodalnhc","2027-04-02":"iodfempcjkbgalnhq","2027-04-06":"kogfenhjqibdalmpc","2027-04-09":"iogblmhcjkfdaenpq","2027-04-13":"kbdflmhjqiogaenpc","2027-04-16":"iodbenhcjkfgalmpq","2027-04-20":"kogbempjqifdalnhc","2027-04-23":"iogflmhcjkbdaenpq","2027-04-27":"kodflmhjqibgaenpc","2027-04-30":"ibdfempcjkogalnhq","2027-05-04":"kbgfenhjqiodalmpc","2027-05-07":"iodbempjqkfgalnhc","2027-05-11":"kbgflmhcjiodaenpq","2027-05-14":"iodfenhcjkbgalmpq","2027-05-18":"kogbenhjqifdalmpc","2027-05-21":"iogfempcjkbdalnhq","2027-05-25":"kodblmhjqifgaenpc","2027-05-28":"iogfenhjqkbdalmpc"}};
+const PT_K=[["POR","TS","DC","TD","AS","CC","AD","PS","PD"],["POR","TS","DC","TD","AS","CC","AD","ATT"]];
+const PT_XY=()=>[MODULI["3-3-2"],[[50,7],[20,26],[50,24],[80,26],[18,50],[50,48],[82,50],[50,74]]];
+function ptBase(e){const ks=Object.keys(PT.by).sort();let c=PT.by[e.date];
+  if(!c){let h=0;for(const ch of String(e.date||e.id))h=(h*31+ch.charCodeAt(0))>>>0;c=PT.by[ks[h%ks.length]]}
+  const ids=[...c].map(ch=>PT.ids[ch.charCodeAt(0)-97]);return [ids.slice(0,9),ids.slice(9)]}
+/* chi non è presente lascia il suo posto libero */
+function ptView(e){const raw=e.pt||ptBase(e);
+  return raw.map(t=>t.map(pid=>pid&&S.players.some(p=>p.id===pid)&&attRec(e,pid).in?pid:null))}
+function repSub(e){const n=(e.rep||[]).filter(x=>x&&(x.t||x.d)).length;return n?`${n} eserciz${n===1?"io":"i"} · partitella`:"Esercizi e partitella"}
+let rpEdit=false, rpSel=null, rpTap=0;
+function openRep(id,fromEl,onClose){
+  const e=S.events.find(x=>x.id===id);if(!e)return;
+  rpEdit=false;rpSel=null;
+  const red=reducedM()||!document.body.animate,E="cubic-bezier(.22,1,.36,1)";
+  const old=$("#rpOpen");if(old)old.remove();
+  const ov=document.createElement("div");ov.className="evo rpo";ov.id="rpOpen";document.body.appendChild(ov);lockScroll(true);
+  const q=x=>ov.querySelector(x);
+  const view=()=>ptView(e);
+  const mut=fn=>{if(!e.pt)e.pt=view();fn(e.pt);dirty=true;autosave()};
+  const surn=p=>p.name.includes(" ")?p.name.slice(p.name.indexOf(" ")+1):p.name;
+  const pitchHTML=(t,V)=>{const K=PT_K[t],XY=PT_XY()[t];
+    return `<div class="pitch pt-pitch ${rpEdit?"editing":""}" data-ptp="${t}">
+      <svg class="pitch-lines" viewBox="0 0 60 90" preserveAspectRatio="none" aria-hidden="true">
+        <rect x="3" y="3" width="54" height="84" rx="1"/><line x1="3" y1="45" x2="57" y2="45"/><circle cx="30" cy="45" r="7.5"/>
+        <rect x="16" y="3" width="28" height="13"/><rect x="24" y="3" width="12" height="5"/><path d="M24 16 Q30 20.5 36 16"/>
+        <rect x="16" y="74" width="28" height="13"/><rect x="24" y="82" width="12" height="5"/><path d="M24 74 Q30 69.5 36 74"/>
+        <rect x="26" y="1.2" width="8" height="1.8" class="goal"/><rect x="26" y="87" width="8" height="1.8" class="goal"/></svg>
+      ${V[t].map((pid,i)=>{const p=pid&&S.players.find(x=>x.id===pid),k=K[i],f=p?fit(p,k):null,sel=rpSel&&rpSel.t===t&&rpSel.i===i;
+        return `<button class="tok ${i===0?"gk":""} ${p?"":"empty"} ${sel?"sel":""}" data-pts="${t}:${i}" style="left:${XY[i][0]}%;top:${100-XY[i][1]}%;--rc:${p?RCOL[p.role]:"#fff"}" ${rpEdit?"":'tabindex="-1"'} aria-label="${p?esc(p.name):"Posto libero"}">
+          <span class="tok-sh" aria-hidden="true"></span><span class="tok-pos f${f==null?"x":f}" title="${esc(POS[k])}">${k==="ATT"?"P":k}</span>
+          <span class="tok-n">${p?jersey(i===0?{...p,role:"Portiere"}:{...p,role:p.role==="Portiere"?"Difensore":p.role}):"+"}</span>
+          <span class="tok-l">${p?esc(surn(p)):"Libero"}</span></button>`}).join("")}</div>`};
+  const exHTML=()=>{const R=e.rep||[];return [0,1,2].map(i=>{const x=R[i]||{},has=x.t||x.d;
+    return `<button class="rp-ex ${has?"":"empty"}" data-ex="${i}" ${canEdit?"":"disabled"}><span class="rp-num">${i+1}</span><span class="rp-tx"><b>${has?esc(x.t||"Senza titolo"):`Esercizio ${i+1}`}</b><small>${has?esc(x.d||""):canEdit?"Tocca per scrivere titolo e descrizione":"Non ancora scritto"}</small></span>${canEdit?'<svg class="rp-pen" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>':""}</button>`}).join("")};
+  const draw=()=>{const V=view(),d=pd(e.date);
+    const on=new Set(V.flat().filter(Boolean));
+    const pres=S.players.filter(p=>attRec(e,p.id).in),abs=S.players.filter(p=>!attRec(e,p.id).in).sort(bySur);
+    const out=pres.filter(p=>!on.has(p.id)).sort(bySur);
+    const selP=rpSel&&V[rpSel.t][rpSel.i];
+    const st=ov.scrollTop;
+    ov.innerHTML=`<button class="evo-back" aria-label="Indietro"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="evo-in" role="dialog" aria-modal="true" aria-label="Resoconto">
+      <div class="cv-top rp-top"><span class="tr-ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><div><small>Resoconto</small><b>Allenamento</b><span>${esc(dayLabel(e.date))}, ore ${esc(e.time)}${e.end?"–"+esc(e.end):""}</span></div></div>
+      <div class="rp-sec"><h4>Esercizi</h4><div class="rp-exs">${exHTML()}</div></div>
+      <div class="rp-sec"><h4>Partitella${e.pt&&canEdit?'<button class="rp-reset" id="rpReset">Ripristina</button>':""}</h4>
+        <div class="rp-team"><span class="rp-dot a"></span><b>Squadra A</b><small>9 giocatori · 3-3-2</small></div>
+        ${pitchHTML(0,V)}
+        <div class="rp-team"><span class="rp-dot b"></span><b>Squadra B</b><small>8 giocatori · una punta</small></div>
+        ${pitchHTML(1,V)}
+        ${canEdit?`<div class="p-bar rp-bar ${rpEdit?"on":""}">${rpEdit?`<span>${rpSel?"Tocca un altro giocatore, anche dell'altra squadra, per scambiarli":"Tocca un giocatore per spostarlo o toglierlo"}</span>${rpSel&&selP?'<button class="btn small danger" id="rpDel">Togli</button>':""}<button class="btn small primary" id="rpDone">Fine</button>`:`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a1.5 1.5 0 0 1 3 0v4"/><path d="M12 10V4.5a1.5 1.5 0 0 1 3 0V10"/><path d="M15 10V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-.5a6 6 0 0 1-5-2.7L4 14.5a1.6 1.6 0 0 1 2.6-1.8L9 15V11"/></svg><span>Tocca due volte un campo per modificare</span>`}</div>`:""}
+        ${out.length?`<div class="rp-out"><h5>Fuori dal campo · ${out.length}</h5><div class="bench">${out.map(p=>`<button class="bch ${rpEdit&&rpSel?"pick":""}" data-ptb="${p.id}" style="--rc:${RCOL[p.role]}" ${rpEdit?"":"disabled"}><span class="tok-n">${jersey(p)}</span><span class="bch-t"><b>${nameHTML(p.name)}</b><small>${esc(POSS[(p.pos1||[])[0]]||p.role)}</small></span></button>`).join("")}</div></div>`:""}
+        ${abs.length?`<p class="rp-abs"><em>Assenti</em>${abs.map(p=>nameHTML(p.name)).join(", ")}</p>`:""}
+      </div>
+      <div class="evo-act"><button class="btn" id="rpClose">Chiudi</button></div></div>`;
+    ov.classList.add("static");ov.scrollTop=st;bind()};
+  const pop=sel=>{if(red)return;const el=q(sel);el&&el.querySelectorAll(".tok-n,.tok-l").forEach(n=>n.animate([{transform:"scale(.6)",opacity:.3},{transform:"none",opacity:1}],{duration:460,easing:"cubic-bezier(.3,1.5,.5,1)"}))};
+  const bind=()=>{
+    q(".evo-back").onclick=close;q("#rpClose").onclick=close;
+    ov.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>{if(canEdit)editEx(+b.dataset.ex)});
+    const rs=q("#rpReset");if(rs)rs.onclick=()=>{if(!rs.dataset.c){rs.dataset.c=1;rs.textContent="Conferma ripristino";return}delete e.pt;rpSel=null;dirty=true;autosave();draw()};
+    const dn=q("#rpDone");if(dn)dn.onclick=()=>{rpEdit=false;rpSel=null;draw()};
+    const dl=q("#rpDel");if(dl)dl.onclick=()=>{const s=rpSel;mut(P=>{P[s.t][s.i]=null});rpSel=null;draw()};
+    if(!canEdit)return;
+    ov.querySelectorAll("[data-ptp]").forEach(pt=>pt.addEventListener("pointerup",ev=>{if(rpEdit&&ev.target.closest(".tok"))return;const now=Date.now();
+      if(now-rpTap<330){rpTap=0;rpEdit=!rpEdit;rpSel=null;draw();
+        if(!red)ov.querySelectorAll(".pt-pitch").forEach(p=>p.animate([{transform:"scale(1)"},{transform:rpEdit?"scale(1.025)":"scale(.985)"},{transform:"scale(1)"}],{duration:420,easing:"cubic-bezier(.3,1.3,.5,1)"}))}
+      else rpTap=now}));
+    if(!rpEdit)return;
+    ov.querySelectorAll("[data-pts]").forEach(b=>b.onclick=()=>{const [t,i]=b.dataset.pts.split(":").map(Number);
+      if(!rpSel){rpSel={t,i};draw();return}
+      if(rpSel.t===t&&rpSel.i===i){rpSel=null;draw();return}
+      const a=rpSel;mut(P=>{const x=P[a.t][a.i];P[a.t][a.i]=P[t][i];P[t][i]=x});rpSel=null;draw();
+      pop(`[data-pts="${t}:${i}"]`);pop(`[data-pts="${a.t}:${a.i}"]`)});
+    ov.querySelectorAll("[data-ptb]").forEach(b=>b.onclick=()=>{if(!rpSel){toast("Prima tocca il posto in campo dove metterlo");return}
+      const s=rpSel;mut(P=>{P[s.t][s.i]=b.dataset.ptb});rpSel=null;draw();pop(`[data-pts="${s.t}:${s.i}"]`)})};
+  const editEx=i=>{const R=e.rep||[],x=R[i]||{};
+    sheet(`<h3>Esercizio ${i+1}</h3>
+      <label class="field">Titolo<input id="ex_t" value="${esc(x.t||"")}" placeholder="Es. Rondo 4 contro 2" maxlength="80"></label>
+      <label class="field">Descrizione<textarea id="ex_d" rows="6" placeholder="Come si svolge, durata, obiettivo…">${esc(x.d||"")}</textarea></label>
+      <div class="sheet-actions">${x.t||x.d?'<button class="btn danger" id="ex_clr">Svuota</button>':"<span></span>"}<div><button class="btn" id="ex_no">Annulla</button><button class="btn primary" id="ex_ok">Fatto</button></div></div>`,
+    bg=>{bg.style.zIndex=60;const g=s=>bg.querySelector(s);
+      g("#ex_no").onclick=closeSheet;
+      const set=v=>{const r=(e.rep||[]).slice();while(r.length<3)r.push(null);r[i]=v;e.rep=r.some(Boolean)?r:undefined;if(!e.rep)delete e.rep;dirty=true;closeSheet();autosave();draw();
+        if(!red){const c=q(`[data-ex="${i}"]`);c&&c.animate([{transform:"scale(.96)",opacity:.6},{transform:"none",opacity:1}],{duration:420,easing:"cubic-bezier(.3,1.4,.5,1)"})}};
+      const cl=g("#ex_clr");if(cl)cl.onclick=()=>{if(!cl.dataset.c){cl.dataset.c=1;cl.textContent="Conferma";return}set(null)};
+      g("#ex_ok").onclick=()=>{const t=g("#ex_t").value.trim(),d=g("#ex_d").value.trim();set(t||d?{t,d}:null)}})};
+  const close=()=>{if(!ov.id)return;ov.id="";autosave();
+    const back=()=>{onClose&&onClose();if(!$("#trOpen"))lockScroll(false)};
+    if(red){ov.remove();back();return}
+    ov.style.pointerEvents="none";
+    const top=q(".rp-top"),btn=document.querySelector("#trOpen #trRep");
+    ov.querySelectorAll(".rp-sec,.evo-act,.evo-back").forEach(el=>el.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(44px) scale(.95)"}],{duration:300,easing:"cubic-bezier(.4,0,.8,.4)",fill:"forwards"}));
+    if(btn&&top){const r=btn.getBoundingClientRect(),c=top.getBoundingClientRect();
+      [...top.children].forEach(el=>el.animate([{opacity:1},{opacity:0}],{duration:200,fill:"forwards"}));
+      top.animate([{transform:"none",opacity:1},{transform:`translate(${r.left-c.left}px,${r.top-c.top}px) scale(${r.width/c.width},${r.height/c.height})`,opacity:.5}],{duration:500,delay:50,easing:"cubic-bezier(.5,0,.15,1)",fill:"forwards"})}
+    let ended=false;const end=()=>{if(ended)return;ended=true;ov.remove();back()};
+    ov.animate([{opacity:1},{opacity:1,offset:.65},{opacity:0}],{duration:600,easing:"ease",fill:"forwards"}).onfinish=end;setTimeout(end,720)};
+  draw();ov.classList.remove("static");
+  /* apertura: l'intestazione nasce dal tasto Resoconto, le sezioni salgono una dopo l'altra */
+  if(!red)try{const top=q(".rp-top");
+    if(fromEl&&fromEl.isConnected){top.style.transformOrigin="0 0";const r=fromEl.getBoundingClientRect(),c=top.getBoundingClientRect();
+      top.animate([{transform:`translate(${r.left-c.left}px,${r.top-c.top}px) scale(${r.width/c.width},${r.height/c.height})`},{transform:"none"}],{duration:540,easing:E});
+      [...top.children].forEach(el=>el.animate([{opacity:0},{opacity:0,offset:.4},{opacity:1}],{duration:500}))}
+    ov.querySelectorAll(".rp-ex").forEach((el,i)=>el.animate([{opacity:0,transform:"translateY(26px) scale(.96)"},{opacity:1,transform:"none"}],{duration:480,delay:160+i*70,easing:"cubic-bezier(.25,1.3,.4,1)",fill:"backwards"}));
+    [...ov.querySelectorAll(".rp-sec")].slice(1).concat([q(".evo-act")]).forEach((el,i)=>el.animate([{opacity:0,transform:"translateY(40px)"},{opacity:1,transform:"none"}],{duration:520,delay:360+i*90,easing:E,fill:"backwards"}));
+    ov.querySelector(".rp-sec h4").animate([{opacity:0},{opacity:1}],{duration:400,delay:120,fill:"backwards"})}catch(_){}
+  ov.addEventListener("click",ev=>{if(ev.target===ov)close()});
 }
 /* ---------- CONVOCAZIONI ---------- */
 /* di default tutti convocati: in e.nc restano solo gli esclusi */
@@ -732,15 +844,15 @@ function vPartite(){
 function goalsMap(){const m={};S.events.filter(e=>e.type==="partita").forEach(e=>Object.entries(e.scorers||{}).forEach(([id,n])=>{n=+n||0;if(n>0)m[id]=(m[id]||0)+n}));return m}
 let plOpen=null;
 /* posizioni specifiche in campo */
-const POS={POR:"Portiere",TS:"Terzino sinistro",DC:"Difensore centrale",TD:"Terzino destro",AS:"Ala sinistra",CC:"Centrocampista centrale",AD:"Ala destra",PS:"Punta sinistra",PD:"Punta destra"};
-const POSS={POR:"Portiere",TS:"Terzino sx",DC:"Dif. centrale",TD:"Terzino dx",AS:"Ala sx",CC:"Centrocampista",AD:"Ala dx",PS:"Punta sx",PD:"Punta dx"};
+const POS={ATT:"Punta",POR:"Portiere",TS:"Terzino sinistro",DC:"Difensore centrale",TD:"Terzino destro",AS:"Ala sinistra",CC:"Centrocampista centrale",AD:"Ala destra",PS:"Punta sinistra",PD:"Punta destra"};
+const POSS={ATT:"Punta",POR:"Portiere",TS:"Terzino sx",DC:"Dif. centrale",TD:"Terzino dx",AS:"Ala sx",CC:"Centrocampista",AD:"Ala dx",PS:"Punta sx",PD:"Punta dx"};
 const POSCOL=k=>k==="POR"?"#f0a21e":/^(TS|DC|TD)$/.test(k)?"#22a35a":/^(AS|CC|AD)$/.test(k)?"#2f6fe0":"#e0453a";
 const POSROWS=[["PS","PD"],["AS","CC","AD"],["TS","DC","TD"],["POR"]];
 const ROLEPOS={Portiere:["POR"],Difensore:["TS","DC","TD"],Centrocampista:["AS","CC","AD"],Attaccante:["PS","PD"]};
 const SLOTPOS={"3-3-2":["POR","TS","DC","TD","AS","CC","AD","PS","PD"],"3-2-3":["POR","TS","DC","TD","CC","CC","AS","PD","AD"],
   "2-3-3":["POR","DC","DC","AS","CC","AD","PS","PD","PD"],"3-4-1":["POR","TS","DC","TD","AS","CC","CC","AD","PD"],"2-4-2":["POR","DC","DC","AS","CC","CC","AD","PS","PD"]};
 /* 2 = posizione principale, 1 = alternativa, 0 = fuori ruolo */
-function fit(p,k){if(!p||!k)return null;const a=p.pos1||[],b=p.pos2||[];
+function fit(p,k){if(!p||!k)return null;if(k==="ATT")return Math.max(fit(p,"PS"),fit(p,"PD"));const a=p.pos1||[],b=p.pos2||[];
   if(a.length||b.length)return a.includes(k)?2:b.includes(k)?1:0;
   return (ROLEPOS[p.role]||[]).includes(k)?2:(ROLEPOS[p.role2]||[]).includes(k)?1:0}
 function posChips(p){const a=p.pos1||[],b=(p.pos2||[]).filter(k=>!a.includes(k));
@@ -1045,7 +1157,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 function unswipeAll(){document.querySelectorAll(".plw.swiped").forEach(w=>{w.classList.remove("swiped");const c=w.querySelector(".pl");if(c){c.classList.remove("dragging");c.style.transform=""}
   const d=w.querySelector(".pl-act.del");if(d){d.classList.remove("confirm");d.querySelector("span").textContent="Elimina"}})}
 function closeSheet(){unswipeAll();const b=$("#sheetbg");if(!b)return;b.id="";b._off&&b._off();setTimeout(autosave,0);
-  if(!document.querySelector("#evOpen,#mOpen,#cvOpen,#trOpen"))lockScroll(false);
+  if(!document.querySelector("#evOpen,#mOpen,#cvOpen,#trOpen,#rpOpen"))lockScroll(false);
   const pv=b.querySelector(".pv-wrap");if(pv)pv.remove();
   if(matchMedia("(prefers-reduced-motion: reduce)").matches){b.remove();return}
   b.classList.add("out");setTimeout(()=>b.remove(),240)}
