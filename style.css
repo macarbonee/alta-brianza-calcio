@@ -1418,3 +1418,8 @@ body{overflow-anchor:none}
 .rp-tema{color:var(--ov-ink);background:color-mix(in srgb,var(--surface) 70%,transparent);border-color:color-mix(in srgb,var(--ov-ink) 18%,transparent)}
 .rp-tema span{color:var(--bib)}
 .rp-reset{color:var(--ov-ink);background:color-mix(in srgb,var(--surface) 60%,transparent);border-color:color-mix(in srgb,var(--ov-ink) 22%,transparent)}
+
+.m-del{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px 16px;border-radius:16px;font:700 15px var(--f-ui);color:var(--loss);background:color-mix(in srgb,var(--loss) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--loss) 30%,transparent);transition:background .2s,color .2s,transform .15s}
+.m-del:active{transform:scale(.97)}
+.m-del.arm{background:var(--loss);color:#fff;border-color:transparent}
+@media (prefers-reduced-motion: no-preference){.m-del.arm{animation:delArm .35s cubic-bezier(.3,1.5,.5,1)}@keyframes delArm{40%{transform:scale(1.04)}}}

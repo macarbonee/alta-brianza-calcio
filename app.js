@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794580636";
+const APP_V="1794580940";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -727,6 +727,7 @@ function matchSheetHTML(e){
     ${scoreEditor}
     <div class="card pers"><div class="pers-h"><span>Tempi</span><small>${esc(Hn)} – ${esc(An)}</small></div>${P.map(per).join("")}</div>
     ${can?convEditHTML(e):convView(e)}
+    ${can?`<button class="btn danger m-del" id="m_del"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg><span>Elimina partita</span></button>`:""}
     <div class="evo-act">${dirty&&canEdit?`<button class="btn bib" id="m_save">${saving?"Salvo…":"Salva"}</button>`:""}<button class="btn" id="m_close">Chiudi</button></div>
   </div>`;
 }
@@ -769,6 +770,11 @@ function drawMatch(){
   if(ov.dataset.drawn)ov.classList.add("static");ov.dataset.drawn=1;mNew=null;mPickNew=false;mSeNew=false;mMenuNew=false;
   const q=sel=>ov.querySelector(sel);
   q("#m_close").onclick=closeMatch;q(".evo-back").onclick=closeMatch;
+  /* elimina: primo tocco chiede conferma, secondo elimina; dopo 4 secondi la richiesta si annulla */
+  const md=q("#m_del");if(md)md.onclick=()=>{
+    if(!md.dataset.c){md.dataset.c=1;md.classList.add("arm");md.querySelector("span").textContent="Tocca di nuovo per eliminare";clearTimeout(md._t);
+      md._t=setTimeout(()=>{if(!md.isConnected)return;delete md.dataset.c;md.classList.remove("arm");md.querySelector("span").textContent="Elimina partita"},4000);return}
+    clearTimeout(md._t);S.events=S.events.filter(x=>x.id!==e.id);dirty=true;mEdit=false;closeMatch();render();autosave();toast("Partita eliminata")};
   const sv=q("#m_save");if(sv)sv.onclick=async()=>{if(sv.disabled)return;
     sv.disabled=true;sv.classList.add("busy");sv.innerHTML='<span class="spin" aria-hidden="true"></span>Salva';
     clearTimeout(asT);mOpen=null;resumeBack=e.id;
