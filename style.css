@@ -1423,3 +1423,10 @@ body{overflow-anchor:none}
 .m-del:active{transform:scale(.97)}
 .m-del.arm{background:var(--loss);color:#fff;border-color:transparent}
 @media (prefers-reduced-motion: no-preference){.m-del.arm{animation:delArm .35s cubic-bezier(.3,1.5,.5,1)}@keyframes delArm{40%{transform:scale(1.04)}}}
+/* stemmi sempre alla stessa altezza, anche quando un nome va su due righe */
+.m-teams,.th-vs{align-items:start}
+.m-teams{--cc:56px}
+.next .m-teams{--cc:72px}
+.mcard .m-teams{--cc:58px}
+.m-mid{align-self:start;min-height:var(--cc);justify-content:center}
+.th-vs > b{align-self:start;height:62px;display:flex;align-items:center}
