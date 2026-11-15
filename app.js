@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794767297";
+const APP_V="1794768004";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -308,9 +308,9 @@ function render(){
   const sub=`${esc(S.categoria)} · Stagione ${esc(S.stagione)}`;
   let body = tab==="squadra"?vSquadra():tab==="partite"?vPartite():tab==="allenamenti"?vAllen():tab==="rosa"?vRosa():vTattica();
   const hdr=`<header class="top"><div class="wrap">
+    <button class="burger" id="menuBtn" aria-label="Apri menu" aria-controls="drawer" aria-expanded="false"><span></span></button>
     <img class="crest" src="${LOGO}" alt="">
     <div class="brand"><h1>Alta Brianza Calcio</h1><p>${sub}</p></div>
-    ${ABD_ME?`<button class="prof" id="profBtn" aria-label="Profilo di ${esc(ABD_ME.first)} ${esc(ABD_ME.last)}" aria-haspopup="true"><span>${esc(ABD_ME.first[0])}${esc(ABD_ME.last[0])}</span></button>`:""}
   </div></header>`;
   const rest=`
   <main class="wrap ${anim}">
@@ -1582,17 +1582,116 @@ document.addEventListener("click",e=>{
     m.innerHTML=`<div class="pp-who"><span class="pp-av">${esc(ABD_ME.first[0])}${esc(ABD_ME.last[0])}</span><div><small>Collegato come</small><b>${esc(ABD_ME.first)} ${esc(ABD_ME.last)}</b><em>Mister</em></div></div>
       <button class="pp-out" id="profOut" role="menuitem"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>Esci</button>`;
     document.body.appendChild(m);b.setAttribute("aria-expanded","true");
-    m.querySelector("#profOut").onclick=ev=>{ev.stopPropagation();closeProf();
+    m.querySelector("#profOut").onclick=ev=>{ev.stopPropagation();closeProf();doLogout()};
+    return}
+  if(!e.target.closest(".prof-pop"))closeProf();
+},true);
+function doLogout(){
       const out=async()=>{try{if(SB)await SB.auth.signOut()}catch(_){}
         try{if(rtChan){SB.removeChannel(rtChan);rtChan=null}}catch(_){}
         ABD_ME=null;MYID=null;art=null;canEdit=false;dirty=false;REMOTE_AT=null;
         try{["abd-user","ab-cache","ab-pending","ab-myid"].forEach(k=>localStorage.removeItem(k))}catch(_){}
         S=withLogos(null);RESUME=null;render();runSplash()};
-      if(dirty&&!saving&&canEdit&&art){clearTimeout(asT);save().finally(out)}else out()};
-    return}
-  if(!e.target.closest(".prof-pop"))closeProf();
-},true);
+      if(dirty&&!saving&&canEdit&&art){clearTimeout(asT);save().finally(out)}else out()}
 addEventListener("scroll",closeProf,{passive:true});
+
+/* ---------- MENU LATERALE (come nel Fanta Consigliere) ---------- */
+const DB_REGION="";  /* regione del server Supabase, da indicare nell'informativa */
+function curTheme(){const t=document.documentElement.dataset.theme;return t==="light"||t==="dark"?t:"auto"}
+let themeT=null;
+function setTheme(t){const html=document.documentElement;clearTimeout(themeT);
+  if(!reducedM()){html.classList.add("theme-anim");themeT=setTimeout(()=>html.classList.remove("theme-anim"),620)}
+  if(t==="auto")delete html.dataset.theme;else html.dataset.theme=t;
+  try{t==="auto"?localStorage.removeItem("ab-theme"):localStorage.setItem("ab-theme",t)}catch(_){}
+  const sg=$("#themeSeg");if(sg){sg.dataset.val=t;sg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.th===t)))}}
+function drawerHTML(){const me=ABD_ME,th=curTheme();
+  const ini=me?esc((me.first||"?")[0])+esc((me.last||"?")[0]):"";
+  return `<div class="dr-head"><img src="${LOGO}" alt=""><div><b>Alta Brianza Calcio</b><small>${esc(S.categoria||"")} · ${esc(S.stagione||"")}</small></div></div>
+    <button type="button" class="dr-btn" id="drSet" aria-expanded="false" aria-controls="drSetP"><span class="dr-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>Impostazioni<span class="dr-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></button>
+    <div class="dr-pan" id="drSetP"><div class="dr-in">
+      <strong>Aspetto</strong>
+      <div class="seg3" id="themeSeg" data-val="${th}" role="group" aria-label="Aspetto">
+        <button type="button" data-th="auto" aria-pressed="${th==="auto"}">Automatico</button>
+        <button type="button" data-th="light" aria-pressed="${th==="light"}">☀ Chiaro</button>
+        <button type="button" data-th="dark" aria-pressed="${th==="dark"}">☾ Scuro</button>
+      </div>
+      <small class="dr-note">Automatico segue l'impostazione del telefono.</small>
+      <strong>App</strong>
+      <small class="dr-note">${(()=>{const n=+APP_V;if(!(n>1e9))return "Si aggiorna da sola";const d=new Date(n*1000);return `Aggiornata il ${d.getDate()} ${MESI[d.getMonth()].toLowerCase()} ${d.getFullYear()} · si aggiorna da sola`})()}</small>
+    </div></div>
+    <button type="button" class="dr-btn" id="drPriv"><span class="dr-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>Informativa sulla privacy<span class="dr-chev r" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+    ${me?`<div class="dr-prof">
+      <div class="dr-pan up" id="drProfP"><div class="dr-in">
+        <button type="button" class="dr-act" id="drEdit"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Modifica profilo</button>
+        <button type="button" class="dr-act out" id="drOut"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>Esci</button>
+      </div></div>
+      <button type="button" class="dr-me" id="drMe" aria-expanded="false" aria-controls="drProfP"><span class="pp-av">${ini}</span><span class="dr-me-t"><b>${esc(me.first)} ${esc(me.last)}</b><small>Mister · collegato</small></span><span class="dr-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></span></button>
+    </div>`:""}`}
+function openDrawer(){if($("#drawer"))return;
+  const sc=document.createElement("div");sc.className="dr-scrim";sc.id="drScrim";
+  const d=document.createElement("nav");d.className="drawer";d.id="drawer";d.setAttribute("aria-label","Menu");d.innerHTML=drawerHTML();
+  document.body.append(sc,d);lockScroll(true);$("#menuBtn")?.setAttribute("aria-expanded","true");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{d.classList.add("open");sc.classList.add("on")}));
+  const q=x=>d.querySelector(x);
+  const tg=(btn,pan)=>{const o=!pan.classList.contains("open");pan.classList.toggle("open",o);btn.setAttribute("aria-expanded",String(o))};
+  q("#drSet").onclick=()=>tg(q("#drSet"),q("#drSetP"));
+  q("#themeSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>setTheme(b.dataset.th));
+  q("#drPriv").onclick=()=>{closeDrawer();setTimeout(openPrivacy,180)};
+  const me=q("#drMe");if(me)me.onclick=()=>tg(me,q("#drProfP"));
+  const ed=q("#drEdit");if(ed)ed.onclick=()=>{closeDrawer();setTimeout(editProfile,180)};
+  const ou=q("#drOut");if(ou)ou.onclick=()=>{if(!ou.dataset.c){ou.dataset.c=1;ou.lastChild.textContent="Tocca di nuovo per uscire";setTimeout(()=>{if(ou.isConnected){delete ou.dataset.c;ou.lastChild.textContent="Esci"}},4000);return}closeDrawer();doLogout()};
+  sc.onclick=closeDrawer;
+  /* trascinando verso sinistra il menu si chiude */
+  let sx=null;d.addEventListener("touchstart",e=>{sx=e.touches[0].clientX},{passive:true});
+  d.addEventListener("touchend",e=>{if(sx!=null&&sx-e.changedTouches[0].clientX>60)closeDrawer();sx=null},{passive:true})}
+function closeDrawer(){const d=$("#drawer"),sc=$("#drScrim");if(!d)return;d.id="";if(sc)sc.id="";
+  d.classList.remove("open");sc&&sc.classList.remove("on");$("#menuBtn")?.setAttribute("aria-expanded","false");
+  if(!document.querySelector("#evOpen,#mOpen,#cvOpen,#trOpen,#rpOpen,#sheetbg"))lockScroll(false);
+  setTimeout(()=>{d.remove();sc&&sc.remove()},reducedM()?0:300)}
+document.addEventListener("click",e=>{if(e.target.closest("#menuBtn")){e.stopPropagation();$("#drawer")?closeDrawer():openDrawer()}},true);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
+function openPrivacy(){
+  const ov=document.createElement("div");ov.className="evo prv";ov.id="prvOpen";document.body.appendChild(ov);lockScroll(true);
+  const sec=(t,b)=>`<section class="card prv-s"><h4>${t}</h4>${b}</section>`;
+  ov.innerHTML=`<button class="evo-back" aria-label="Indietro"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="evo-in" role="dialog" aria-modal="true" aria-label="Informativa sulla privacy">
+    <div class="cv-top"><span class="tr-ic prv-ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span><div><small>Informativa</small><b>Privacy e dati</b><span>Come l'app tratta i dati della squadra</span></div></div>
+    ${sec("A cosa serve l'app",`<p>Alta Brianza Calcio è lo strumento interno dei mister degli Esordienti U12 per organizzare la stagione: calendario, partite, allenamenti, rosa e formazioni.</p>`)}
+    ${sec("Quali dati contiene",`<ul><li>Nome, cognome, numero di maglia e ruolo dei giocatori</li><li>Presenze agli allenamenti, RPE (fatica percepita) e convocazioni</li><li>Partite: risultati, marcatori, formazioni, note e link ai video</li><li>Account dei mister: nome, cognome e un indirizzo interno usato solo per l'accesso</li></ul><p>Non vengono raccolti indirizzi, numeri di telefono, foto dei giocatori né dati di pagamento.</p>`)}
+    ${sec("Dove vengono salvati",`<ul><li><b>Database Supabase</b>: tutti i dati della squadra stanno in un unico archivio sul servizio cloud Supabase${DB_REGION?`, su un server in ${esc(DB_REGION)}`:""}. Il collegamento è cifrato (HTTPS) e l'archivio è leggibile e modificabile solo dagli account dei mister.</li><li><b>Sul telefono</b>: una copia dei dati resta nella memoria dell'app, così funziona anche senza connessione. Si cancella toccando Esci.</li><li><b>GitHub Pages</b>: ospita solo il codice dell'app (grafica e funzioni), senza nessun dato della squadra.</li></ul>`)}
+    ${sec("Chi può vederli",`<p>Solo i mister con un account: Mattia Carbone e Nicola Pagliardi. I dati non vengono venduti, condivisi con terzi né usati per pubblicità. L'app non usa cookie di tracciamento né strumenti di statistica.</p>`)}
+    ${sec("Per quanto tempo",`<p>I dati restano per la durata della stagione sportiva e possono essere cancellati in qualsiasi momento su richiesta.</p>`)}
+    ${sec("Richieste e cancellazione",`<p>Per vedere, correggere o cancellare i dati di un giocatore, la famiglia può rivolgersi ai mister.</p><p class="prv-note">Questa pagina descrive come funziona l'app e non sostituisce l'informativa ufficiale della società.</p>`)}
+    <div class="evo-act"><button class="btn" id="prvClose">Chiudi</button></div></div>`;
+  const red=reducedM()||!ov.animate;
+  if(!red)[...ov.querySelector(".evo-in").children].forEach((el,i)=>el.animate([{opacity:0,transform:"translateY(26px)"},{opacity:1,transform:"none"}],{duration:460,delay:i*55,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"}));
+  const close=()=>{if(!ov.id)return;ov.id="";lockScroll(false);if(red){ov.remove();return}
+    ov.style.pointerEvents="none";ov.animate([{opacity:1},{opacity:0}],{duration:240,fill:"forwards"}).onfinish=()=>ov.remove();
+    ov.querySelector(".evo-in").animate([{transform:"none"},{transform:"translateY(18px) scale(.97)"}],{duration:240,easing:"ease-in",fill:"forwards"})};
+  ov.querySelector(".evo-back").onclick=close;ov.querySelector("#prvClose").onclick=close;ov.addEventListener("click",e=>{if(e.target===ov)close()})}
+function editProfile(){if(!ABD_ME)return;const me=ABD_ME;
+  sheet(`<h3>Modifica profilo</h3>
+    <div class="grid2"><label class="field">Nome<input id="pf_f" value="${esc(me.first)}" autocomplete="given-name" maxlength="30"></label>
+    <label class="field">Cognome<input id="pf_l" value="${esc(me.last)}" autocomplete="family-name" maxlength="30"></label></div>
+    <label class="field">Nuovo codice persona <small style="font-weight:500;opacity:.7">(lascia vuoto per non cambiarlo)</small><span class="pw"><input id="pf_c" type="password" autocomplete="new-password" placeholder="Almeno 6 caratteri"><button type="button" class="eye" id="pf_eye" aria-label="Mostra codice"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
+    <label class="field">Ripeti il nuovo codice<input id="pf_c2" type="password" autocomplete="new-password"></label>
+    <p class="ev-sub" id="pf_err" hidden style="color:var(--loss)"></p>
+    <p class="ev-sub">Per accedere continuerai a usare il tuo nome e cognome; il codice nuovo vale dal prossimo accesso, anche sugli altri dispositivi.</p>
+    <div class="sheet-actions"><span></span><div><button class="btn" id="pf_no">Annulla</button><button class="btn primary" id="pf_ok">Fatto</button></div></div>`,
+  bg=>{const g=x=>bg.querySelector(x),err=m=>{const e=g("#pf_err");e.textContent=m;e.hidden=false};
+    g("#pf_no").onclick=closeSheet;
+    g("#pf_eye").onclick=()=>{const t=g("#pf_c").type==="password"?"text":"password";g("#pf_c").type=t;g("#pf_c2").type=t};
+    g("#pf_ok").onclick=async()=>{const f=g("#pf_f").value.trim(),l=g("#pf_l").value.trim(),c=g("#pf_c").value.trim(),c2=g("#pf_c2").value.trim();
+      if(!f||!l){err("Nome e cognome non possono essere vuoti.");return}
+      if(c&&c.length<6){err("Il codice deve avere almeno 6 caratteri.");return}
+      if(c!==c2){err("I due codici non coincidono.");return}
+      const nm={first:capW(f.toLowerCase()),last:l.toUpperCase()};
+      if(!SB||!navigator.onLine){err("Serve la connessione per salvare il profilo.");return}
+      const ok=g("#pf_ok");ok.disabled=true;ok.textContent="Salvo…";
+      try{const upd={data:{first:nm.first,last:nm.last}};if(c)upd.password=c.toLowerCase();
+        const r=await SB.auth.updateUser(upd);if(r.error)throw r.error;
+        ABD_ME=nm;try{localStorage.setItem("abd-user",JSON.stringify(nm))}catch(_){}
+        closeSheet();toast(c?"Profilo e codice aggiornati":"Profilo aggiornato")}
+      catch(x){ok.disabled=false;ok.textContent="Fatto";err(/same|different/i.test(x&&x.message||"")?"Il nuovo codice è uguale a quello attuale.":"Non sono riuscito a salvare: riprova.")}}})}
 /* aggiornamenti: quando torni nell'app controlla se c'è una versione nuova e si aggiorna da sola */
 async function checkUpdate(){
   try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const j=await r.json();
