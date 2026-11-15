@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794767009";
+const APP_V="1794767297";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -619,6 +619,25 @@ function openRep(id,fromEl,onClose){
     ov.querySelector(".rp-sec h4").animate([{opacity:0},{opacity:1}],{duration:400,delay:120,fill:"backwards"})}catch(_){}
   ov.addEventListener("click",ev=>{if(ev.target===ov)close()});
 }
+/* ---------- LINK VEO ---------- */
+const VEO_IC='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5.5" width="13" height="13" rx="2.5"/><path d="M15.5 10l6-3.5v11l-6-3.5z"/></svg>';
+function veoCard(e){const u=e.veo,ed=canEdit;
+  if(!u&&!ed)return `<div class="card veo off"><span class="veo-ic">${VEO_IC}</span><span class="veo-tx"><b>Link Veo</b><small>Video non ancora disponibile</small></span></div>`;
+  const pen=ed?`<button class="veo-ed" id="veoEdit" aria-label="${u?"Modifica link":"Aggiungi link"}">${u?'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>':"Aggiungi"}</button>`:"";
+  return u?`<div class="card veo"><a class="veo-go" href="${esc(u)}" target="_blank" rel="noopener"><span class="veo-ic">${VEO_IC}</span><span class="veo-tx"><b>Link Veo</b><small>Guarda il video della partita</small></span><svg class="veo-ar" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></a>${pen}</div>`
+    :`<div class="card veo off"><span class="veo-ic">${VEO_IC}</span><span class="veo-tx"><b>Link Veo</b><small>Nessun video ancora</small></span>${pen}</div>`}
+function editVeo(e,after){
+  sheet(`<h3>Link Veo</h3>
+    <label class="field">Link del video<input id="veo_u" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" value="${esc(e.veo||"")}" placeholder="https://app.veo.co/matches/…"></label>
+    <p class="ev-sub" id="veo_err" hidden style="color:var(--loss)">Il link non sembra valido.</p>
+    <div class="sheet-actions">${e.veo?'<button class="btn danger" id="veo_clr">Svuota</button>':"<span></span>"}<div><button class="btn" id="veo_no">Annulla</button><button class="btn primary" id="veo_ok">Fatto</button></div></div>`,
+  bg=>{bg.style.zIndex=60;const g=x=>bg.querySelector(x);g("#veo_no").onclick=closeSheet;
+    const set=v=>{if(v)e.veo=v;else delete e.veo;dirty=true;closeSheet();autosave();after&&after()};
+    const ok=()=>{let v=g("#veo_u").value.trim();if(!v){set("");return}
+      if(!/^https?:\/\//i.test(v))v="https://"+v;
+      try{const x=new URL(v);if(!x.hostname.includes("."))throw 0;set(x.href)}catch(_){g("#veo_err").hidden=false}};
+    g("#veo_ok").onclick=ok;g("#veo_u").addEventListener("keydown",k=>{if(k.key==="Enter"){k.preventDefault();ok()}});
+    const cl=g("#veo_clr");if(cl)cl.onclick=()=>{if(!cl.dataset.c){cl.dataset.c=1;cl.textContent="Conferma";return}set("")}})}
 /* ---------- CONVOCAZIONI ---------- */
 /* di default tutti convocati: in e.nc restano solo gli esclusi */
 let cvT=null;
@@ -727,6 +746,7 @@ function matchSheetHTML(e){
     ${scoreEditor}
     <div class="card pers"><div class="pers-h"><span>Tempi</span><small>${esc(Hn)} – ${esc(An)}</small></div>${P.map(per).join("")}</div>
     ${can?convEditHTML(e):convView(e)}
+    ${veoCard(e)}
     ${can?`<button class="btn danger m-del" id="m_del"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg><span>Elimina partita</span></button>`:""}
     <div class="evo-act">${dirty&&canEdit?`<button class="btn bib" id="m_save">${saving?"Salvo…":"Salva"}</button>`:""}<button class="btn" id="m_close">Chiudi</button></div>
   </div>`;
@@ -770,6 +790,7 @@ function drawMatch(){
   if(ov.dataset.drawn)ov.classList.add("static");ov.dataset.drawn=1;mNew=null;mPickNew=false;mSeNew=false;mMenuNew=false;
   const q=sel=>ov.querySelector(sel);
   q("#m_close").onclick=closeMatch;q(".evo-back").onclick=closeMatch;
+  const ve=q("#veoEdit");if(ve)ve.onclick=ev=>{ev.preventDefault();editVeo(e,()=>{if(mOpen===e.id){ov.dataset.drawn="";drawMatch()}})};
   /* elimina: primo tocco chiede conferma, secondo elimina; dopo 4 secondi la richiesta si annulla */
   const md=q("#m_del");if(md)md.onclick=()=>{
     if(!md.dataset.c){md.dataset.c=1;md.classList.add("arm");md.querySelector("span").textContent="Tocca di nuovo per eliminare";clearTimeout(md._t);

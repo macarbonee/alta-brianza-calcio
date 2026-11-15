@@ -1430,3 +1430,17 @@ body{overflow-anchor:none}
 .mcard .m-teams{--cc:58px}
 .m-mid{align-self:start;min-height:var(--cc);justify-content:center}
 .th-vs > b{align-self:start;height:62px;display:flex;align-items:center}
+
+/* ---------- link Veo ---------- */
+.veo{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px}
+.veo-go{flex:1;min-width:0;display:flex;align-items:center;gap:13px;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.veo-go:active{opacity:.7}
+.veo.off{padding-block:12px}
+.veo-ic{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--nv-a),var(--nv-b) 60%,var(--nv-c));box-shadow:0 6px 16px var(--sh-n)}
+.veo.off .veo-ic{background:var(--chip);color:var(--muted);box-shadow:none}
+.veo-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.veo-tx b{font:700 16px var(--f-ui)}
+.veo-tx small{font:500 13px var(--f-ui);color:var(--muted)}
+.veo-ar{flex:none;color:var(--pitch)}
+.veo-ed{flex:none;min-width:40px;height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--card-border);background:var(--chip);color:var(--pitch);font:700 13.5px var(--f-ui);display:grid;place-items:center;cursor:pointer}
+.veo-ed:active{transform:scale(.94)}
