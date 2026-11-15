@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794610971";
+const APP_V="1794767009";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -496,7 +496,7 @@ function openTrain(id,fromEl){
 /* partitelle 9 contro 8 preparate per ogni allenamento della stagione:
    la squadra da 9 gioca 3-3-2, quella da 8 con una sola punta */
 const PT={"ids":["xmw6vun11wv3s","p2","p9","xmw6vtr2ukbay","xmw6w0g3bssjb","p3","xmw6vvgxm2gkx","xmw6vzz5nxa0q","p1","p11","p12","p8","p5","xmw6vyzpsbchz","p4","p6","p10"],"by":{"2026-11-10":"ibgdempcjkaoflnhq","2026-11-13":"kodfenhjqibgalmpc","2026-11-17":"ibdfempcjkogalnhq","2026-11-20":"kdogenhjqibaflmpc","2026-11-24":"igdfempcjkboalnhq","2026-11-27":"kbodenhjqiagflmpc","2026-12-01":"iodfempcjkbgalnhq","2026-12-04":"kbgdenhjqiaoflmpc","2026-12-08":"idgbempcjkaoflnhq","2026-12-11":"kfdoenhjqibgalmpc","2026-12-15":"ibdfempcjkagolnhq","2026-12-18":"kgdoenhjqibaflmpc","2026-12-22":"ibodempcjkagflnhq","2027-01-05":"kgdfenhjqiboalmpc","2027-01-08":"ifdoempcjkbgalnhq","2027-01-12":"kdgbenhjqiaoflmpc","2027-01-15":"ifdgempcjkboalnhq","2027-01-19":"kdobenhjqiagflmpc","2027-01-22":"ibdfempcjkgoalnhq","2027-01-26":"kdgoenhjqibfalmpc","2027-01-29":"ibdgempcjkfoalnhq","2027-02-02":"kdofenhjqibgalmpc","2027-02-05":"idofempcjkbgalnhq","2027-02-09":"kbdgenhjqifoalmpc","2027-02-12":"idgfempcjkboalnhq","2027-02-16":"kbdoenhjqifgalmpc","2027-02-19":"idogempcjkbaflnhq","2027-02-23":"kbdfenhjqiogalmpc","2027-02-26":"ibdfempcjkogalnhq","2027-03-02":"kdogenhjqibfalmpc","2027-03-05":"ibgdempcjkfoalnhq","2027-03-09":"kodfenhjqibgalmpc","2027-03-12":"idobempcjkagflnhq","2027-03-16":"kfdgenhjqiboalmpc","2027-03-19":"iodfempcjkbgalnhq","2027-03-23":"kbgdenhjqifoalmpc","2027-03-26":"ibdfempcjkagolnhq","2027-03-30":"kgdoenhjqibfalmpc","2027-04-02":"igdoempcjkbaflnhq","2027-04-06":"kbdfenhjqiagolmpc","2027-04-09":"igdfempcjkboalnhq","2027-04-13":"kbodenhjqifgalmpc","2027-04-16":"idgbempcjkfoalnhq","2027-04-20":"kfdoenhjqibgalmpc","2027-04-23":"ibdoempcjkfgalnhq","2027-04-27":"kdgfenhjqiboalmpc","2027-04-30":"idgoempcjkbfalnhq","2027-05-04":"kbdfenhjqigoalmpc","2027-05-07":"ifdgempcjkboalnhq","2027-05-11":"kdobenhjqifgalmpc","2027-05-14":"ifdoempcjkbgalnhq","2027-05-18":"kdgbenhjqifoalmpc","2027-05-21":"ibdfempcjkgoalnhq","2027-05-25":"kdgoenhjqiabflmpc","2027-05-28":"ibodempcjkfgalnhq"}};
-const EXN=["Attivazione","Tecnica","Duelli"];
+const EXN=["Blocco 1","Blocco 2","Blocco 3"];
 const PT_K=[["POR","TS","DC","TD","AS","CC","AD","PS","PD"],["POR","TS","DC","TD","AS","CC","AD","ATT"]];
 const PT_XY=()=>[MODULI["3-3-2"],[[50,7],[20,26],[50,24],[80,26],[18,50],[50,48],[82,50],[50,74]]];
 function ptBase(e){const ks=Object.keys(PT.by).sort();let c=PT.by[e.date];
