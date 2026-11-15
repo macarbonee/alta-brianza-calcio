@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794768637";
+const APP_V="1794787192";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -1350,14 +1350,18 @@ async function save(){
     render();return false}
 }
 
-function glassX(){const g=$("#glass");if(!g)return 0;try{return new DOMMatrixReadOnly(getComputedStyle(g).transform).m41}catch(_){return 0}}
+/* iPad e computer in orizzontale: le sezioni stanno in una colonna a sinistra, la pillola scorre in verticale */
+const SIDEBAR=()=>!!(window.matchMedia&&matchMedia("(min-width:900px) and (orientation: landscape)").matches);
+const gOff=b=>SIDEBAR()?b.offsetTop:b.offsetLeft, gLen=b=>SIDEBAR()?b.offsetHeight:b.offsetWidth;
+const gTr=(p,sq)=>SIDEBAR()?`translateY(${p}px)${sq?` scale(${sq[1]},${sq[0]})`:""}`:`translateX(${p}px)${sq?` scale(${sq[0]},${sq[1]})`:""}`;
+function glassX(){const g=$("#glass");if(!g)return 0;try{const m=new DOMMatrixReadOnly(getComputedStyle(g).transform);return SIDEBAR()?m.m42:m.m41}catch(_){return 0}}
 function placeGlass(fromX){
   const g=$("#glass"),b=document.querySelector('.tabbar button[aria-current="page"]');if(!g||!b)return;
-  const x=b.offsetLeft,w=b.offsetWidth;g.style.width=w+"px";
+  const x=gOff(b),w=gLen(b);if(SIDEBAR()){g.style.height=w+"px";g.style.width=""}else{g.style.width=w+"px";g.style.height=""}
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if(fromX==null||reduced||Math.abs(fromX-x)<1){g.style.transition="none";g.style.transform=`translateX(${x}px)`;void g.offsetWidth;g.style.transition="";return}
-  g.style.transition="none";g.style.transform=`translateX(${fromX}px) scale(1.18,.86)`;void g.offsetWidth;g.style.transition="";
-  requestAnimationFrame(()=>{g.style.transform=`translateX(${x}px)`});
+  if(fromX==null||reduced||Math.abs(fromX-x)<1){g.style.transition="none";g.style.transform=gTr(x);void g.offsetWidth;g.style.transition="";return}
+  g.style.transition="none";g.style.transform=gTr(fromX,[1.18,.86]);void g.offsetWidth;g.style.transition="";
+  requestAnimationFrame(()=>{g.style.transform=gTr(x)});
 }
 function goTab(t,fromX){
   if(t===tab)return;
@@ -1368,20 +1372,21 @@ function goTab(t,fromX){
 function bindGlass(){
   const bar=document.querySelector(".tabbar .in"),g=$("#glass");if(!bar||!g)return;
   const btns=[...bar.querySelectorAll("button")];let st=null;
-  const near=x=>{const c=x+g.offsetWidth/2;let bi=0,bd=1e9;btns.forEach((b,i)=>{const d=Math.abs(b.offsetLeft+b.offsetWidth/2-c);if(d<bd){bd=d;bi=i}});return bi};
-  bar.onpointerdown=e=>{st={x:e.clientX,gx:glassX(),drag:false,lx:e.clientX,lt:performance.now(),cx:glassX(),id:e.pointerId}};
-  bar.onpointermove=e=>{if(!st)return;const dx=e.clientX-st.x;
+  const V=SIDEBAR(),cp=e=>V?e.clientY:e.clientX,gl=()=>V?g.offsetHeight:g.offsetWidth;
+  const near=x=>{const c=x+gl()/2;let bi=0,bd=1e9;btns.forEach((b,i)=>{const d=Math.abs(gOff(b)+gLen(b)/2-c);if(d<bd){bd=d;bi=i}});return bi};
+  bar.onpointerdown=e=>{st={x:cp(e),gx:glassX(),drag:false,lx:cp(e),lt:performance.now(),cx:glassX(),id:e.pointerId}};
+  bar.onpointermove=e=>{if(!st)return;const dx=cp(e)-st.x;
     if(!st.drag){if(Math.abs(dx)<7)return;st.drag=true;try{bar.setPointerCapture(st.id)}catch(_){}g.classList.add("lift");g.style.transition="transform .12s ease-out,box-shadow .3s"}
-    const max=bar.clientWidth-g.offsetWidth-4,x=Math.min(max,Math.max(4,st.gx+dx));
-    const now=performance.now(),v=Math.abs(e.clientX-st.lx)/Math.max(8,now-st.lt);st.lx=e.clientX;st.lt=now;
+    const max=(V?bar.clientHeight:bar.clientWidth)-gl()-4,x=Math.min(max,Math.max(4,st.gx+dx));
+    const now=performance.now(),v=Math.abs(cp(e)-st.lx)/Math.max(8,now-st.lt);st.lx=cp(e);st.lt=now;
     const sx=1+Math.min(.28,v*.35);
-    g.style.transform=`translateX(${x}px) scale(${1.1*sx},${1.1/sx})`;st.cx=x;
+    g.style.transform=gTr(x,[1.1*sx,1.1/sx]);st.cx=x;
     const i=near(x);btns.forEach((b,k)=>b.classList.toggle("hov",k===i))};
   const end=()=>{if(!st)return;const s=st;st=null;if(!s.drag)return;
     g.classList.remove("lift");g.style.transition="";btns.forEach(b=>b.classList.remove("hov"));
     dragJustEnded=true;setTimeout(()=>dragJustEnded=false,60);
     const t=ORDER[near(s.cx)];
-    if(t===tab){g.style.transform=`translateX(${btns[ORDER.indexOf(t)].offsetLeft}px)`;return}
+    if(t===tab){g.style.transform=gTr(gOff(btns[ORDER.indexOf(t)]));return}
     goTab(t,s.cx)};
   bar.onpointerup=end;bar.onpointercancel=end;
 }
@@ -1733,6 +1738,8 @@ const pinBar=(()=>{if(!IS_APP)return ()=>{};
     root.style.setProperty("--tb-top",(fh-gap-tb.offsetHeight)+"px");root.classList.add("pinbar")}})();
 const _render=render;render=function(){_render();pinBar()};
 addEventListener("resize",()=>pinBar());
+try{matchMedia("(min-width:900px) and (orientation: landscape)").addEventListener("change",()=>{placeGlass(null);bindGlass()})}catch(_){}
+addEventListener("resize",()=>{clearTimeout(window._pgT);window._pgT=setTimeout(()=>placeGlass(null),120)});
 /* girando il telefono la Tattica ridisegna il campo nel verso giusto */
 try{matchMedia("(orientation: landscape) and (min-width:600px)").addEventListener("change",m=>{if(tab!=="tattica"||!$("#pitch"))return;const y=window.scrollY;anim="";render();window.scrollTo(0,y);
   /* appena girato in orizzontale, il campo si mette tutto in vista */
