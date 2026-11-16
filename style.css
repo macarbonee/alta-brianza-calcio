@@ -1531,3 +1531,8 @@ header.top .wrap{gap:10px}
 .drow small.maphint{display:block;margin-top:3px;font-size:11.5px;color:var(--muted)}
 :root[data-theme="dark"] .maplink{color:var(--bib)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .maplink{color:var(--bib)}}
+
+.rp-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:18px;border:1.5px dashed color-mix(in srgb,var(--pitch) 45%,transparent);background:color-mix(in srgb,var(--surface) 70%,transparent);color:var(--pitch);font:700 15px var(--f-ui);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .18s}
+.rp-add:active{transform:scale(.97)}
+:root[data-theme="dark"] .rp-add{color:var(--bib);border-color:color-mix(in srgb,var(--bib) 45%,transparent)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .rp-add{color:var(--bib);border-color:color-mix(in srgb,var(--bib) 45%,transparent)}}
