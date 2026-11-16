@@ -1522,3 +1522,5 @@ header.top .wrap{gap:10px}
   main.a-open ~ .tabbar{animation-name:openBarS!important}
   main.wrap{padding-bottom:40px}
 }
+.prv-ic{display:flex!important;align-items:center;justify-content:center}
+.prv-ic svg{width:42px;height:42px;display:block;stroke-width:1.8;filter:drop-shadow(0 3px 5px rgba(5,12,45,.3))}
