@@ -1546,3 +1546,10 @@ header.top .wrap{gap:10px}
 .drawer.open .dr-btn{animation-delay:.08s}.drawer.open .dr-btn+.dr-pan+.dr-btn{animation-delay:.13s}.drawer.open .dr-prof{animation-delay:.18s}
 @keyframes drIn{from{opacity:0;transform:translateX(-18px)}}
 @media (prefers-reduced-motion:reduce){.drawer.open .dr-head,.drawer.open .dr-btn,.drawer.open .dr-prof{animation:none}}
+
+.drawer{transform:translate3d(-102%,0,0);transition:transform .34s cubic-bezier(.4,0,.6,1)}
+.drawer.open{transform:translate3d(0,0,0)}
+.drawer:not(.open){transition:transform .34s cubic-bezier(.4,0,.6,1)}
+.dr-scrim{transition:opacity .34s ease}
+.dr-scrim,.drawer{touch-action:none}
+.drawer{touch-action:pan-y}

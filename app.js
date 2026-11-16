@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794819553";
+const APP_V="1794820008";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -1651,8 +1651,15 @@ function openDrawer(){if($("#drawer"))return;
   const sc=document.createElement("div");sc.className="dr-scrim";sc.id="drScrim";
   const d=document.createElement("nav");d.className="drawer";d.id="drawer";d.setAttribute("aria-label","Menu");d.innerHTML=drawerHTML();
   document.body.append(sc,d);$("#menuBtn")?.setAttribute("aria-expanded","true");
-  setTimeout(()=>{if(d.id)lockScroll(true)},reducedM()?0:460);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{d.classList.add("open");sc.classList.add("on")}));
+  /* niente blocco dello scorrimento sulla pagina (su iPhone faceva saltare la barra in alto):
+     si fermano solo i trascinamenti sullo sfondo e sul menu quando non ha niente da scorrere */
+  const stop=e=>{if(e.cancelable)e.preventDefault()};
+  sc.addEventListener("touchmove",stop,{passive:false});sc.addEventListener("wheel",stop,{passive:false});
+  d.addEventListener("touchmove",e=>{if(d.scrollHeight<=d.clientHeight+1)stop(e)},{passive:false});
+  d.classList.add("open");sc.classList.add("on");
+  if(!reducedM()&&d.animate){
+    d.animate([{transform:"translate3d(-102%,0,0)"},{transform:"translate3d(0,0,0)"}],{duration:460,easing:"cubic-bezier(.32,.72,0,1)"});
+    sc.animate([{opacity:0},{opacity:1}],{duration:400,easing:"ease-out"})}
   const q=x=>d.querySelector(x);
   const tg=(btn,pan)=>{const o=!pan.classList.contains("open");pan.classList.toggle("open",o);btn.setAttribute("aria-expanded",String(o))};
   q("#drSet").onclick=()=>tg(q("#drSet"),q("#drSetP"));
@@ -1667,7 +1674,7 @@ function openDrawer(){if($("#drawer"))return;
   d.addEventListener("touchend",e=>{if(sx!=null&&sx-e.changedTouches[0].clientX>60)closeDrawer();sx=null},{passive:true})}
 function closeDrawer(){const d=$("#drawer"),sc=$("#drScrim");if(!d)return;d.id="";if(sc)sc.id="";
   d.classList.remove("open");sc&&sc.classList.remove("on");$("#menuBtn")?.setAttribute("aria-expanded","false");
-  setTimeout(()=>{d.remove();sc&&sc.remove();if(!document.querySelector("#evOpen,#mOpen,#cvOpen,#trOpen,#rpOpen,#prvOpen,#sheetbg,#drawer"))lockScroll(false)},reducedM()?0:360)}
+  setTimeout(()=>{d.remove();sc&&sc.remove()},reducedM()?0:360)}
 document.addEventListener("click",e=>{if(e.target.closest("#menuBtn")){e.stopPropagation();$("#drawer")?closeDrawer():openDrawer()}},true);
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
 function openPrivacy(){
