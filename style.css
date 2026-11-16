@@ -1524,3 +1524,10 @@ header.top .wrap{gap:10px}
 }
 .prv-ic{display:flex!important;align-items:center;justify-content:center}
 .prv-ic svg{width:42px;height:42px;display:block;stroke-width:1.8;filter:drop-shadow(0 3px 5px rgba(5,12,45,.3))}
+
+.maplink{color:var(--pitch);font-weight:600;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--pitch) 35%,transparent);text-underline-offset:3px;-webkit-tap-highlight-color:transparent}
+.maplink svg{display:inline-block;vertical-align:-1px;margin-left:4px}
+.maplink:active{opacity:.6}
+.drow small.maphint{display:block;margin-top:3px;font-size:11.5px;color:var(--muted)}
+:root[data-theme="dark"] .maplink{color:var(--bib)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .maplink{color:var(--bib)}}
