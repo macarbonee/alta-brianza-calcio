@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794844902";
+const APP_V="1794845110";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -885,6 +885,28 @@ function jersey(p){
 }
 
 /* ---------- PARTITE ---------- */
+/* filtro della sezione Partite: tutte, solo da giocare, solo giocate */
+let mFilt=(()=>{try{const v=localStorage.getItem("ab-mfilt");return v==="todo"||v==="done"?v:"all"}catch(_){return "all"}})();
+const MFL={all:"Tutte",todo:"Da giocare",done:"Giocate"};
+function mfBtn(lbl,n){return `<button class="mf-btn" id="mfBtn" aria-haspopup="menu" aria-expanded="false">${lbl} · ${n}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>`}
+function closeMf(){const m=$("#mfPop");if(!m)return;m.id="";$("#mfBtn")?.setAttribute("aria-expanded","false");
+  if(reducedM()||!m.animate){m.remove();return}m.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-6px) scale(.96)"}],{duration:160,easing:"ease-in",fill:"forwards"}).onfinish=()=>m.remove()}
+document.addEventListener("click",ev=>{
+  const b=ev.target.closest("#mfBtn");
+  if(b){ev.stopPropagation();if($("#mfPop")){closeMf();return}
+    const r=b.getBoundingClientRect(),m=document.createElement("div");m.className="mf-pop";m.id="mfPop";m.setAttribute("role","menu");
+    m.innerHTML=["all","todo","done"].map(k=>`<button role="menuitemradio" aria-checked="${mFilt===k}" data-mf="${k}"><span>${k==="all"?"Tutte le partite":MFL[k]}</span>${mFilt===k?'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':""}</button>`).join("");
+    m.style.left=Math.max(12,r.left)+"px";m.style.top=(r.bottom+8)+"px";document.body.appendChild(m);b.setAttribute("aria-expanded","true");
+    if(!reducedM()&&m.animate){m.animate([{opacity:0,transform:"translateY(-8px) scale(.94)"},{opacity:1,transform:"none"}],{duration:300,easing:"cubic-bezier(.22,1,.36,1)"});
+      m.querySelectorAll("button").forEach((x,i)=>x.animate([{opacity:0,transform:"translateY(-4px)"},{opacity:1,transform:"none"}],{duration:260,delay:40+i*35,easing:"ease-out",fill:"backwards"}))}
+    return}
+  const o=ev.target.closest("[data-mf]");
+  if(o){ev.stopPropagation();const v=o.dataset.mf;closeMf();if(v===mFilt)return;mFilt=v;try{localStorage.setItem("ab-mfilt",v)}catch(_){}
+    const y=Math.min(window.scrollY,0);anim="";render();window.scrollTo(0,y);
+    if(!reducedM())document.querySelectorAll("#app main section").forEach((sx,i)=>sx.animate&&sx.animate([{opacity:0,transform:"translateY(14px)"},{opacity:1,transform:"none"}],{duration:380,delay:i*50,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"}));return}
+  if($("#mfPop")&&!ev.target.closest("#mfPop"))closeMf();
+},true);
+addEventListener("scroll",()=>{if($("#mfPop"))closeMf()},{passive:true});
 function vPartite(){
   const ms=sorted().filter(e=>e.type==="partita");
   const nowT=new Date().toTimeString().slice(0,5);
@@ -896,10 +918,10 @@ function vPartite(){
     <div class="card tot"><b style="color:var(--win)">${tally("V")}</b><span>Vinte</span></div>
     <div class="card tot"><b style="color:var(--draw)">${tally("N")}</b><span>Pareggiate</span></div>
     <div class="card tot"><b style="color:var(--loss)">${tally("P")}</b><span>Perse</span></div></div></section>`:""}
-  <section><h2>Da giocare · ${todo.length} ${add}</h2>
-    <div class="mlist">${monthList(todo,`<div class="card empty">Nessuna partita in programma${canEdit?". Tocca + Partita per aggiungerne una.":"."}</div>`).replace('class="mrow mcard st-next"','class="mrow mcard st-next is-next"')}</div></section>
-  <section><h2>Giocate · ${done.length}</h2>
-    <div class="mlist">${monthList(done,'<div class="card empty">Ancora nessuna partita giocata.</div>')}</div></section>`;
+  ${mFilt!=="done"?`<section><h2>${mfBtn("Da giocare",todo.length)} ${add}</h2>
+    <div class="mlist">${monthList(todo,`<div class="card empty">Nessuna partita in programma${canEdit?". Tocca + Partita per aggiungerne una.":"."}</div>`).replace('class="mrow mcard st-next"','class="mrow mcard st-next is-next"')}</div></section>`:""}
+  ${mFilt!=="todo"?`<section><h2>${mFilt==="done"?mfBtn("Giocate",done.length)+" "+add:`Giocate · ${done.length}`}</h2>
+    <div class="mlist">${monthList(done,'<div class="card empty">Ancora nessuna partita giocata.</div>')}</div></section>`:""}`;
 }
 
 /* ---------- ROSA ---------- */
