@@ -3,7 +3,7 @@
 const ROLES=["Portiere","Difensore","Centrocampista","Attaccante"];
 const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GG=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-const APP_V="1794819142";
+const APP_V="1794819553";
 const TRAIN="img/train.webp", MATCHBG="img/match.webp", LOGO="img/logo.webp";
 /* dati: arrivano dal database condiviso; sul telefono resta una copia per aprire subito l'app (anche offline) */
 const LOGOS=window.AB_LOGOS||{};
@@ -444,9 +444,21 @@ function openEvent(id,fromEl){
     box.querySelector(".next").animate([{transform:`translate(${dx}px,${dy}px) scale(${sx},${r.height/c.height})`,borderRadius:"18px"},{transform:"none"}],{duration:520,easing:"cubic-bezier(.22,1,.36,1)"});
     [...box.children].slice(1).forEach((el,i)=>el.animate([{opacity:0,transform:"translateY(18px)"},{opacity:1,transform:"none"}],{duration:420,delay:140+i*60,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"}));
   }
-  const close=()=>{lockScroll(false);if(reduced||!ov.animate){ov.remove();return}
-    ov.animate([{opacity:1},{opacity:0}],{duration:220,easing:"ease",fill:"forwards"}).onfinish=()=>ov.remove();
-    box.animate([{transform:"none"},{transform:"translateY(14px) scale(.97)"}],{duration:220,easing:"ease-in",fill:"forwards"})};
+  /* chiusura: il riquadro torna nella card da cui era partito, il resto scende e sfuma;
+     lo sfondo sfocato sparisce per ultimo e lo scorrimento si sblocca solo a fine animazione */
+  const close=()=>{if(ov.dataset.closing)return;ov.dataset.closing=1;ov.id="";
+    if(reduced||!ov.animate){ov.remove();if(!document.querySelector(".evo[id],#sheetbg,#drawer"))lockScroll(false);return}
+    ov.style.pointerEvents="none";
+    const card=box.querySelector(".next"),src=document.querySelector(`#app [data-open="${id}"]`);
+    const r=src&&src.getBoundingClientRect(),c=card.getBoundingClientRect();
+    card.style.transformOrigin="0 0";
+    if(r&&r.bottom>60&&r.top<innerHeight-60)
+      card.animate([{transform:"none",opacity:1},{transform:`translate(${r.left-c.left}px,${r.top-c.top}px) scale(${r.width/c.width},${r.height/c.height})`,opacity:.35,borderRadius:"18px"}],{duration:460,easing:"cubic-bezier(.4,0,.2,1)",fill:"forwards"});
+    else card.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(-10px) scale(.95)"}],{duration:320,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"});
+    [...box.children].slice(1).reverse().forEach((el,i)=>el.animate([{opacity:1,transform:"none"},{opacity:0,transform:"translateY(26px)"}],{duration:240,delay:i*25,easing:"cubic-bezier(.4,0,1,1)",fill:"forwards"}));
+    ov.querySelectorAll(".evo-back,.evo-edit").forEach(el=>el.animate([{opacity:1},{opacity:0}],{duration:180,fill:"forwards"}));
+    let done=false;const end=()=>{if(done)return;done=true;ov.remove();if(!document.querySelector(".evo[id],#sheetbg,#drawer"))lockScroll(false)};
+    ov.animate([{opacity:1},{opacity:1,offset:.62},{opacity:0}],{duration:520,easing:"ease-out",fill:"forwards"}).onfinish=end;setTimeout(end,640)};
   ov.addEventListener("click",ev=>{if(ev.target===ov)close()});
   ov.querySelector("#evClose").onclick=close;ov.querySelector(".evo-back").onclick=close;
   const eb=ov.querySelector("#evEdit");if(eb)eb.onclick=()=>{ov.remove();lockScroll(false);editEvent(e.id)};
@@ -1638,7 +1650,8 @@ function drawerHTML(){const me=ABD_ME,th=curTheme();
 function openDrawer(){if($("#drawer"))return;
   const sc=document.createElement("div");sc.className="dr-scrim";sc.id="drScrim";
   const d=document.createElement("nav");d.className="drawer";d.id="drawer";d.setAttribute("aria-label","Menu");d.innerHTML=drawerHTML();
-  document.body.append(sc,d);lockScroll(true);$("#menuBtn")?.setAttribute("aria-expanded","true");
+  document.body.append(sc,d);$("#menuBtn")?.setAttribute("aria-expanded","true");
+  setTimeout(()=>{if(d.id)lockScroll(true)},reducedM()?0:460);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{d.classList.add("open");sc.classList.add("on")}));
   const q=x=>d.querySelector(x);
   const tg=(btn,pan)=>{const o=!pan.classList.contains("open");pan.classList.toggle("open",o);btn.setAttribute("aria-expanded",String(o))};
@@ -1654,8 +1667,7 @@ function openDrawer(){if($("#drawer"))return;
   d.addEventListener("touchend",e=>{if(sx!=null&&sx-e.changedTouches[0].clientX>60)closeDrawer();sx=null},{passive:true})}
 function closeDrawer(){const d=$("#drawer"),sc=$("#drScrim");if(!d)return;d.id="";if(sc)sc.id="";
   d.classList.remove("open");sc&&sc.classList.remove("on");$("#menuBtn")?.setAttribute("aria-expanded","false");
-  if(!document.querySelector("#evOpen,#mOpen,#cvOpen,#trOpen,#rpOpen,#sheetbg"))lockScroll(false);
-  setTimeout(()=>{d.remove();sc&&sc.remove()},reducedM()?0:300)}
+  setTimeout(()=>{d.remove();sc&&sc.remove();if(!document.querySelector("#evOpen,#mOpen,#cvOpen,#trOpen,#rpOpen,#prvOpen,#sheetbg,#drawer"))lockScroll(false)},reducedM()?0:360)}
 document.addEventListener("click",e=>{if(e.target.closest("#menuBtn")){e.stopPropagation();$("#drawer")?closeDrawer():openDrawer()}},true);
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
 function openPrivacy(){

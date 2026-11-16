@@ -1536,3 +1536,13 @@ header.top .wrap{gap:10px}
 .rp-add:active{transform:scale(.97)}
 :root[data-theme="dark"] .rp-add{color:var(--bib);border-color:color-mix(in srgb,var(--bib) 45%,transparent)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .rp-add{color:var(--bib);border-color:color-mix(in srgb,var(--bib) 45%,transparent)}}
+
+/* menu laterale: movimento più morbido, solo trasformazioni sulla GPU */
+.drawer{transition:transform .44s cubic-bezier(.32,.72,0,1);will-change:transform;contain:layout paint;backface-visibility:hidden}
+.drawer:not(.open){transition:transform .34s cubic-bezier(.4,0,.6,1)}
+.dr-scrim{transition:opacity .44s cubic-bezier(.32,.72,0,1);will-change:opacity}
+.dr-scrim:not(.on){transition:opacity .34s ease}
+.drawer.open .dr-head,.drawer.open .dr-btn,.drawer.open .dr-prof{animation:drIn .5s cubic-bezier(.22,1,.36,1) backwards}
+.drawer.open .dr-btn{animation-delay:.08s}.drawer.open .dr-btn+.dr-pan+.dr-btn{animation-delay:.13s}.drawer.open .dr-prof{animation-delay:.18s}
+@keyframes drIn{from{opacity:0;transform:translateX(-18px)}}
+@media (prefers-reduced-motion:reduce){.drawer.open .dr-head,.drawer.open .dr-btn,.drawer.open .dr-prof{animation:none}}
